@@ -1,5 +1,6 @@
 extern crate tsbin;
 
+use tsbin::tupletype::TupleTypeBuilder;
 use tsbin::tupletype::TupleType;
 use tsbin::tupletype::PrimitiveType;
 use tsbin::tupletype::Type;
@@ -49,4 +50,33 @@ fn main() {
     let str14 = "Vec<f32>";
     println!("{:?}", Type::parse_vector(str13.as_bytes()));
     println!("{:?}", Type::parse_vector(str14.as_bytes()));
+
+    let tt = TupleTypeBuilder::new()
+                 .push(Type::Primitive(PrimitiveType::F32)).build();
+    println!("{}", tt.to_string());
+
+    let tt = TupleTypeBuilder::new()
+                 .push(Type::Primitive(PrimitiveType::F32))
+                 .push(Type::Primitive(PrimitiveType::U8))
+                 .push(Type::Primitive(PrimitiveType::U32)).build();
+    println!("{}", tt.to_string());
+
+    let tt = TupleTypeBuilder::new()
+                 .push(Type::Primitive(PrimitiveType::F32))
+                 .push(Type::Array(PrimitiveType::U32, 16)).build();
+    println!("{}", tt.to_string());
+
+    let tt = TupleTypeBuilder::new()
+                 .push_str("f32")
+                 .push_str("[u32;16]").build();
+    println!("{}", tt.to_string());
+
+    let tt = TupleTypeBuilder::new()
+                 .push_str("f64")
+                 .push_str("Vec<u32>").build();
+    println!("{}", tt.to_string());
+
+    println!("{:?}", TupleType::parse("(u8)".as_bytes()));
+    println!("{:?}", TupleType::parse("(u8,u64,i32)".as_bytes()));
+    println!("{:?}", TupleType::parse("(f32,[f32;4])".as_bytes()));
 }
