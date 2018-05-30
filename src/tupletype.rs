@@ -45,6 +45,10 @@ impl string::ToString for TupleType {
 }
 
 impl TupleType {
+    /// Parsing a TupleType signature.
+    ///
+    /// This function parses a TupleType signature string.
+    /// It returns a pair of None and the given slice if failured.
     pub fn parse(data: &[u8]) -> (Option<Self>, &[u8]) {
         let mut types_ = Vec::new();
 
