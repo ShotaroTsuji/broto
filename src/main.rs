@@ -4,6 +4,8 @@ use tsbin::tupletype::TupleTypeBuilder;
 use tsbin::tupletype::TupleType;
 use tsbin::tupletype::PrimitiveType;
 use tsbin::tupletype::Type;
+use tsbin::header::Header;
+use tsbin::header::ByteOrder;
 
 fn main() {
     let pt1 = PrimitiveType::U8;
@@ -79,4 +81,7 @@ fn main() {
     println!("{:?}", TupleType::parse("(u8)".as_bytes()));
     println!("{:?}", TupleType::parse("(u8,u64,i32)".as_bytes()));
     println!("{:?}", TupleType::parse("(f32,[f32;4])".as_bytes()));
+
+    let hd = Header::new(0);
+    println!("{:?}", hd);
 }
