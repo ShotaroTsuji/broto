@@ -24,14 +24,14 @@ impl From<bincode::Error> for WriteError {
 
 type Result<T> = std::result::Result<T, WriteError>;
 
-pub struct Writer<T: io::Write> {
-    stream: T,
+pub struct Writer<W: io::Write> {
+    stream: W,
 }
 
-impl<T: io::Write> Writer<T> {
-    pub fn new(stream_: T) -> Writer<T> {
+impl<W: io::Write> Writer<W> {
+    pub fn new(stream: W) -> Writer<W> {
         Writer {
-            stream: stream_,
+            stream: stream,
         }
     }
 
@@ -61,7 +61,7 @@ impl<T: io::Write> Writer<T> {
         Ok(bytes1 + bytes2)
     }
 
-    pub fn get_stream(self) -> T {
+    pub fn get_stream(self) -> W {
         self.stream
     }
 }
