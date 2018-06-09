@@ -6,6 +6,8 @@ use tsbin::tupletype::PrimitiveType;
 use tsbin::tupletype::Type;
 use tsbin::header::Header;
 use tsbin::header::ByteOrder;
+use tsbin::header::LogBlock;
+use tsbin::header::LogBlockBuilder;
 use tsbin::writer::Writer;
 
 fn main() {
@@ -85,6 +87,9 @@ fn main() {
 
     let hd = Header::new(0);
     println!("{:?}", hd);
+
+    let log = LogBlockBuilder::new().program("tsbin").info("creation").build();
+    println!("log: {:?}", log);
 
     let mut buf: Vec<u8> = Vec::new();
     let mut writer = Writer::new(buf);

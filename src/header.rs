@@ -48,6 +48,56 @@ pub struct LogBlock {
     info    : String,
 }
 
+#[derive(Debug)]
+pub struct LogBlockBuilder<ProgType, InfoType> {
+    time    : Option<std::time::SystemTime>,
+    program : ProgType,
+    info    : InfoType,
+}
+
+impl LogBlockBuilder<(), ()> {
+    pub fn new() -> Self {
+        LogBlockBuilder {
+            time    : None,
+            program : (),
+            info    : (),
+        }
+    }
+}
+
+impl LogBlockBuilder<String, String> {
+    pub fn build(self) -> LogBlock {
+        LogBlock {
+            time    : if let Some(t) = self.time { t } else { std::time::SystemTime::now() },
+            program : self.program,
+            info    : self.info,
+        }
+    }
+}
+
+impl<ProgType, InfoType> LogBlockBuilder<ProgType, InfoType> {
+    pub fn program<S: Into<String>>(self, program: S) -> LogBlockBuilder<String, InfoType> {
+        LogBlockBuilder {
+            time    : self.time,
+            program : program.into(),
+            info    : self.info,
+        }
+    }
+
+    pub fn info<S: Into<String>>(self, info: S) -> LogBlockBuilder<ProgType, String> {
+        LogBlockBuilder {
+            time    : self.time,
+            program : self.program,
+            info    : info.into(),
+        }
+    }
+
+    pub fn time(mut self, time: std::time::SystemTime) -> Self {
+        self.time = Some(time);
+        self
+    }
+}
+
 
 #[derive(Debug)]
 pub enum ByteOrder {
