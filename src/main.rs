@@ -91,10 +91,12 @@ fn main() {
     let log = LogBlockBuilder::new().program("tsbin").info("creation").build();
     println!("log: {:?}", log);
 
-    let mut buf: Vec<u8> = Vec::new();
+    let buf: Vec<u8> = Vec::new();
     let mut writer = Writer::new(buf);
-    writer.write_header(0);
-    writer.write_log(log);
+    let size = writer.write_header(0).unwrap();
+    println!("written size = {}", size);
+    let size = writer.write_log(log).unwrap();
+    println!("written size = {}", size);
     let buf = writer.get_stream();
     println!("buf: {:?}", buf);
 }
