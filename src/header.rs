@@ -31,6 +31,18 @@ pub struct BlockHeader {
     size  : u64,
 }
 
+impl BlockHeader {
+    pub fn new<S: Into<String>>(name: S, size: u64) -> Self {
+        let mut magic: [u8; 8] = [0; 8];
+        magic.clone_from_slice("block   ".as_bytes());
+        BlockHeader {
+            magic : magic,
+            name  : name.into(),
+            size  : size,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct DataBlock {
     index_size : u64,
