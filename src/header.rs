@@ -1,7 +1,7 @@
 use tupletype::TupleType;
 use std;
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Header {
     magic_number    : [u8; 8],
     header_size     : u64,
@@ -32,7 +32,7 @@ pub struct BlockHeader {
 }
 
 #[derive(Debug)]
-pub struct DataHeader {
+pub struct DataBlock {
     index_size : u64,
     value_size : u64,
     index_type : String,
@@ -42,7 +42,7 @@ pub struct DataHeader {
 }
 
 #[derive(Debug)]
-pub struct LogHeader {
+pub struct LogBlock {
     time    : std::time::SystemTime,
     program : String,
     info    : String,

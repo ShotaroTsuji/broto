@@ -1,5 +1,9 @@
+#[macro_use]
+extern crate serde_derive;
+
 pub mod tupletype;
 pub mod header;
+pub mod writer;
 
 #[cfg(test)]
 mod test {

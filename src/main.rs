@@ -6,6 +6,7 @@ use tsbin::tupletype::PrimitiveType;
 use tsbin::tupletype::Type;
 use tsbin::header::Header;
 use tsbin::header::ByteOrder;
+use tsbin::writer::Writer;
 
 fn main() {
     let pt1 = PrimitiveType::U8;
@@ -84,4 +85,10 @@ fn main() {
 
     let hd = Header::new(0);
     println!("{:?}", hd);
+
+    let mut buf: Vec<u8> = Vec::new();
+    let mut writer = Writer::new(buf);
+    writer.write_header(0);
+    let buf = writer.get_stream();
+    println!("buf: {:?}", buf);
 }

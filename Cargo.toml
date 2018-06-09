@@ -4,3 +4,6 @@ version = "0.1.0"
 authors = ["Shotaro Tsuji"]
 
 [dependencies]
+serde = "1.0.66"
+serde_derive = "1.0.66"
+bincode = "1.0.0"
