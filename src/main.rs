@@ -94,6 +94,7 @@ fn main() {
     let mut buf: Vec<u8> = Vec::new();
     let mut writer = Writer::new(buf);
     writer.write_header(0);
+    writer.write_log(log);
     let buf = writer.get_stream();
     println!("buf: {:?}", buf);
 }

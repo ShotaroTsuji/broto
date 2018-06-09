@@ -24,7 +24,7 @@ impl Header {
     }
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct BlockHeader {
     magic : [u8; 8],
     name  : String,
@@ -53,7 +53,7 @@ pub struct DataBlock {
     length     : u64,
 }
 
-#[derive(Debug)]
+#[derive(Serialize,Deserialize,Debug)]
 pub struct LogBlock {
     time    : std::time::SystemTime,
     program : String,
