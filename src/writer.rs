@@ -2,7 +2,8 @@ extern crate bincode;
 
 use std;
 use std::io;
-use header::{Header, BlockHeader, LogBlock};
+use std::marker::PhantomData;
+use header::{Header, BlockHeader, LogBlock, DataBlock};
 
 #[derive(Debug)]
 pub enum WriteError {
@@ -61,7 +62,25 @@ impl<W: io::Write> Writer<W> {
         Ok(bytes1 + bytes2)
     }
 
+    pub fn write_data(&mut self, block: DataBlock) -> Result<DataWriter<W>> {
+        let block_bin: Vec<u8> = bincode::serialize(&block)?;
+        let header = BlockHeader::new("data", block_bin.len() as u64);
+        let header_bin: Vec<u8> = bincode::serialize(&header)?;
+        self.stream.write(&header_bin)?;
+        self.stream.write(&block_bin)?;
+        Ok(DataWriter {
+            stream: &mut self.stream,
+            phantom: PhantomData,
+        })
+    }
+
     pub fn get_stream(self) -> W {
         self.stream
     }
+}
+
+#[derive(Debug)]
+pub struct DataWriter<'a, W: 'a> {
+    stream: &'a mut W,
+    phantom: PhantomData<&'a W>,
 }
