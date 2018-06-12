@@ -43,7 +43,7 @@ impl BlockHeader {
     }
 }
 
-#[derive(Debug)]
+#[derive(Serialize,Deserialize,Debug)]
 pub struct DataBlock {
     index_size : u64,
     value_size : u64,
@@ -51,6 +51,49 @@ pub struct DataBlock {
     value_type : String,
     byteorder  : u32,
     length     : u64,
+}
+
+#[derive(Debug)]
+pub struct DataBlockBuilder<IndexType,ValueType,LengthType> {
+    index_type : IndexType,
+    value_type : ValueType,
+    length : LengthType,
+}
+
+impl DataBlockBuilder<(), (), ()> {
+    pub fn new() -> Self {
+        DataBlockBuilder {
+            index_type : (),
+            value_type : (),
+            length : (),
+        }
+    }
+}
+
+impl<IndexType,ValueType,LengthType> DataBlockBuilder<IndexType,ValueType,LengthType> {
+    pub fn index_type<T: Into<TupleType>>(self, id_type: T) -> DataBlockBuilder<TupleType,ValueType,LengthType> {
+        DataBlockBuilder {
+            index_type: id_type.into(),
+            value_type: self.value_type,
+            length    : self.length,
+        }
+    }
+
+    pub fn value_type<T: Into<TupleType>>(self, val_type: T) -> DataBlockBuilder<IndexType,TupleType,LengthType> {
+        DataBlockBuilder {
+            index_type : self.index_type,
+            value_type : val_type.into(),
+            length : self.length,
+        }
+    }
+
+    pub fn length(self, len: u64) -> DataBlockBuilder<IndexType,ValueType,u64> {
+        DataBlockBuilder {
+            index_type : self.index_type,
+            value_type : self.value_type,
+            length : len,
+        }
+    }
 }
 
 #[derive(Serialize,Deserialize,Debug)]

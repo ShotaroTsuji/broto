@@ -8,6 +8,7 @@ use tsbin::header::Header;
 use tsbin::header::ByteOrder;
 use tsbin::header::LogBlock;
 use tsbin::header::LogBlockBuilder;
+use tsbin::header::{DataBlock,DataBlockBuilder};
 use tsbin::writer::Writer;
 
 fn main() {
@@ -99,4 +100,10 @@ fn main() {
     println!("written size = {}", size);
     let buf = writer.get_stream();
     println!("buf: {:?}", buf);
+
+    let db = DataBlockBuilder::new()
+        .index_type("(f32)")
+        .value_type("(Vec<f32>)")
+        .length(10);
+    println!("{:?}", db);
 }

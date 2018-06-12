@@ -88,6 +88,12 @@ impl TupleType {
     }
 }
 
+impl From<&'static str> for TupleType {
+    fn from(string: &str) -> Self {
+        TupleType::parse(string.as_bytes()).0.unwrap()
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum PrimitiveType {
     U8,
