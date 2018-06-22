@@ -102,8 +102,7 @@ fn main() {
     println!("buf: {:?}", buf);
 
     let db = DataBlockBuilder::new()
-        .index_type("(f32)")
-        .value_type("(Vec<f32>)")
+        .type_list("(f32)")
         .length(10);
     println!("{:?}", db);
 }
