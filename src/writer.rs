@@ -4,6 +4,7 @@ use std;
 use std::io;
 use std::marker::PhantomData;
 use header::{Header, BlockHeader, LogBlock, DataBlock};
+use serde;
 
 #[derive(Debug)]
 pub enum WriteError {
@@ -81,6 +82,13 @@ impl<W: io::Write> Writer<W> {
 
 #[derive(Debug)]
 pub struct DataWriter<'a, W: 'a> {
-    stream: &'a mut W,
+    stream : &'a mut W,
     phantom: PhantomData<&'a W>,
+}
+
+impl<'a, W> DataWriter<'a, W> where W: 'a + std::io::Write {
+    pub fn write_value<T: serde::Serialize>(&mut self, value: T) -> Result<usize> {
+        let value_bin: Vec<u8> = bincode::serialize(&value)?;
+        self.stream.write(&value_bin).map_err(|e| e.into())
+    }
 }

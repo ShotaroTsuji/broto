@@ -98,12 +98,23 @@ fn main() {
     println!("written size = {}", size);
     let size = writer.write_log(log).unwrap();
     println!("written size = {}", size);
-    let buf = writer.get_stream();
-    println!("buf: {:?}", buf);
 
     let data = DataBlockBuilder::new()
         .type_list("(f32)")
         .length(10)
         .build();
     println!("{:?}", data);
+
+    {
+        let mut dw = writer.write_data(data).unwrap();
+        println!("{:?}", dw);
+        for i in 0..10 {
+            let x = 0.1 * i as f32;
+            println!("write {} ----> {:?}", x, dw.write_value(x));
+        }
+    }
+
+    let buf = writer.get_stream();
+    println!("buf: {:?}", buf);
+
 }
