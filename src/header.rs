@@ -81,6 +81,16 @@ impl<TypeList,LengthType> DataBlockBuilder<TypeList,LengthType> {
     }
 }
 
+impl DataBlockBuilder<TupleType, u64> {
+    pub fn build(self) -> DataBlock {
+        DataBlock {
+            type_list : self.type_list.to_string(),
+            byteorder : 0,
+            length    : self.length,
+        }
+    }
+}
+
 #[derive(Serialize,Deserialize,Debug)]
 pub struct LogBlock {
     time    : std::time::SystemTime,

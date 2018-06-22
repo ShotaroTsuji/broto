@@ -101,8 +101,9 @@ fn main() {
     let buf = writer.get_stream();
     println!("buf: {:?}", buf);
 
-    let db = DataBlockBuilder::new()
+    let data = DataBlockBuilder::new()
         .type_list("(f32)")
-        .length(10);
-    println!("{:?}", db);
+        .length(10)
+        .build();
+    println!("{:?}", data);
 }
