@@ -106,16 +106,14 @@ fn main() {
         .build();
     println!("{:?}", data);
 
-    /*
     {
         let mut dw = writer.write_data(data).unwrap();
         println!("{:?}", dw);
         for i in 0..10 {
-            let x = 0.1 * i as f32;
-            println!("write {} ----> {:?}", x, dw.write_value(x));
+            let x = vec![0.1 * i as f64];
+            println!("write {:?} ----> {:?}", x, dw.write_value(0.0, &x));
         }
     }
-    */
 
     let buf = writer.get_stream();
     println!("buf: {:?}", buf);

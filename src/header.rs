@@ -51,6 +51,16 @@ pub struct DataBlock {
     length     : u64,
 }
 
+impl DataBlock {
+    pub fn index_len(&self) -> u64 {
+        self.index_len
+    }
+
+    pub fn value_len(&self) -> u64 {
+        self.value_len
+    }
+}
+
 #[derive(Debug)]
 pub struct DataBlockBuilder<IdxLenType,ValLenType,LengthType> {
     index_len : IdxLenType,

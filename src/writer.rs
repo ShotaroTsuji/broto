@@ -70,6 +70,7 @@ impl<W: io::Write> Writer<W> {
         self.stream.write(&header_bin)?;
         self.stream.write(&block_bin)?;
         Ok(DataWriter {
+            value_len: block.value_len() as usize,
             stream: &mut self.stream,
             phantom: PhantomData,
         })
@@ -82,13 +83,17 @@ impl<W: io::Write> Writer<W> {
 
 #[derive(Debug)]
 pub struct DataWriter<'a, W: 'a> {
+    value_len : usize,
     stream : &'a mut W,
     phantom: PhantomData<&'a W>,
 }
 
 impl<'a, W> DataWriter<'a, W> where W: 'a + std::io::Write {
-    pub fn write_value<T: serde::Serialize>(&mut self, value: T) -> Result<usize> {
-        let value_bin: Vec<u8> = bincode::serialize(&value)?;
-        self.stream.write(&value_bin).map_err(|e| e.into())
+    pub fn write_value(&mut self, index: f64, values: &[f64]) -> Result<usize> {
+        let index_bin: Vec<u8> = bincode::serialize(&index)?;
+        let value_bin: Vec<u8> = bincode::serialize(&values[0..self.value_len])?;
+        let bytes1 = self.stream.write(&index_bin)?;
+        let bytes2 = self.stream.write(&value_bin)?;
+        Ok(bytes1 + bytes2)
     }
 }
