@@ -45,46 +45,61 @@ impl BlockHeader {
 
 #[derive(Serialize,Deserialize,Debug)]
 pub struct DataBlock {
-    type_list  : String,
-    byteorder  : u32,
+    index_len  : u64,
+    value_len  : u64,
+    byteorder  : u64,
     length     : u64,
 }
 
 #[derive(Debug)]
-pub struct DataBlockBuilder<TypeList,LengthType> {
-    type_list : TypeList,
+pub struct DataBlockBuilder<IdxLenType,ValLenType,LengthType> {
+    index_len : IdxLenType,
+    value_len : ValLenType,
     length    : LengthType,
 }
 
-impl DataBlockBuilder<(), ()> {
+impl DataBlockBuilder<(), (), ()> {
     pub fn new() -> Self {
         DataBlockBuilder {
-            type_list: (),
+            index_len : (),
+            value_len : (),
             length : (),
         }
     }
 }
 
-impl<TypeList,LengthType> DataBlockBuilder<TypeList,LengthType> {
-    pub fn type_list<T: Into<TupleType>>(self, type_list: T) -> DataBlockBuilder<TupleType,LengthType> {
+impl<IdxLenType, ValLenType, LengthType> DataBlockBuilder<IdxLenType, ValLenType, LengthType> {
+    pub fn index_len(self, len: u64) -> DataBlockBuilder<u64, ValLenType, LengthType> {
         DataBlockBuilder {
-            type_list : type_list.into(),
+            index_len : len,
+            value_len : self.value_len,
             length    : self.length,
         }
     }
 
-    pub fn length(self, len: u64) -> DataBlockBuilder<TypeList,u64> {
+    pub fn value_len(self, len: u64) -> DataBlockBuilder<IdxLenType, u64, LengthType> {
         DataBlockBuilder {
-            type_list : self.type_list,
+            index_len : self.index_len,
+            value_len : len,
+            length    : self.length,
+        }
+    }
+
+    pub fn length(self, len: u64) -> DataBlockBuilder<IdxLenType, ValLenType, u64> {
+        DataBlockBuilder {
+            index_len : self.index_len,
+            value_len : self.value_len,
             length : len,
         }
     }
 }
 
-impl DataBlockBuilder<TupleType, u64> {
+impl DataBlockBuilder<u64, u64, u64> {
     pub fn build(self) -> DataBlock {
+        assert_eq!(self.index_len, 1);
         DataBlock {
-            type_list : self.type_list.to_string(),
+            index_len : self.index_len,
+            value_len : self.value_len,
             byteorder : 0,
             length    : self.length,
         }

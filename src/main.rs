@@ -100,11 +100,13 @@ fn main() {
     println!("written size = {}", size);
 
     let data = DataBlockBuilder::new()
-        .type_list("(f32)")
+        .index_len(1)
+        .value_len(1)
         .length(10)
         .build();
     println!("{:?}", data);
 
+    /*
     {
         let mut dw = writer.write_data(data).unwrap();
         println!("{:?}", dw);
@@ -113,6 +115,7 @@ fn main() {
             println!("write {} ----> {:?}", x, dw.write_value(x));
         }
     }
+    */
 
     let buf = writer.get_stream();
     println!("buf: {:?}", buf);
