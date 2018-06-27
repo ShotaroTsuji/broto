@@ -23,10 +23,8 @@ pub struct Header {
 
 impl Header {
     pub fn new(file_size: u64) -> Header {
-        let mut magic: [u8; 8] = [0; 8];
-        magic.clone_from_slice("tsbinfmt".as_bytes());
         Header {
-            magic_number  : magic,
+            magic_number  : Header::clone_magic(),
             header_size   : std::mem::size_of::<Header>() as u64,
             major_version : 0,
             minor_version : 1,
@@ -34,9 +32,21 @@ impl Header {
         }
     }
 
+    pub fn clone_magic() -> [u8; 8] {
+        let mut magic = [0; 8];
+        magic.clone_from_slice("tsbinfmt".as_bytes());
+        magic
+    }
+
+    pub fn check_magic(input: &[u8]) -> bool {
+        let magic = "tsbinfmt".as_bytes();
+        magic.iter().zip(input.iter()).all(|(&x, &y)| x == y)
+    }
+
     pub fn read_from<R: std::io::Read>(reader: &mut R) -> Option<Header> {
         let mut magic: [u8; 8] = [0; 8];
         let result = reader.read(&mut magic);
+        assert!(Header::check_magic(&magic));
         assert_eq!(result.unwrap(), 8);
         let header_size = reader.read_u64::<LittleEndian>().unwrap();
         let major_version = reader.read_u32::<LittleEndian>().unwrap();
@@ -62,18 +72,28 @@ pub struct BlockHeader {
 
 impl BlockHeader {
     pub fn new<S: Into<String>>(name: S, size: u64) -> Self {
-        let mut magic: [u8; 8] = [0; 8];
-        magic.clone_from_slice("block   ".as_bytes());
         BlockHeader {
-            magic : magic,
+            magic : Self::clone_magic(),
             name  : name.into(),
             size  : size,
         }
     }
 
+    pub fn clone_magic() -> [u8; 8] {
+        let mut magic = [0; 8];
+        magic.clone_from_slice("block   ".as_bytes());
+        magic
+    }
+
+    pub fn check_magic(input: &[u8]) -> bool {
+        let magic = "block   ".as_bytes();
+        magic.iter().zip(input.iter()).all(|(&x, &y)| x == y)
+    }
+
     pub fn read_from<R: std::io::Read>(reader: &mut R) -> Option<Self> {
         let mut magic: [u8; 8] = [0; 8];
         let result = reader.read(&mut magic);
+        assert!(Self::check_magic(&magic));
         assert_eq!(result.unwrap(), 8);
         let name = read_string_from(reader).unwrap();
         let size = reader.read_u64::<LittleEndian>().unwrap();
