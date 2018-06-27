@@ -12,6 +12,7 @@ use tsbin::header::LogBlock;
 use tsbin::header::LogBlockBuilder;
 use tsbin::header::{DataBlock,DataBlockBuilder};
 use tsbin::writer::Writer;
+use tsbin::reader::Reader;
 
 fn main() {
     let pt1 = PrimitiveType::U8;
@@ -121,6 +122,15 @@ fn main() {
     println!("buf: {:?}", buf);
 
     let mut cur = Cursor::new(buf);
+    let mut reader = Reader::new(cur);
+    let _ = reader.initialize().unwrap();
+
+    println!("reader: {:?}", reader);
+
+    let block = reader.next_block().unwrap();
+    println!("block : {:?}", block);
+
+    /*
     let hd = Header::read_from(&mut cur).unwrap();
     println!("header : {:?}", hd);
 
@@ -135,4 +145,5 @@ fn main() {
 
     let data = DataBlock::read_from(&mut cur).unwrap();
     println!("data block : {:?}", data);
+    */
 }

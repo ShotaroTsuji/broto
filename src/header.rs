@@ -1,15 +1,16 @@
 use tupletype::TupleType;
 use std;
 use byteorder::{LittleEndian, ReadBytesExt};
+use error::ReadError;
 
-fn read_string_from<R: std::io::Read>(reader: &mut R) -> Option<String> {
+fn read_string_from<R: std::io::Read>(reader: &mut R) -> Result<String, ReadError> {
     let mut v = Vec::new();
-    let len = reader.read_u64::<LittleEndian>().unwrap();
+    let len = reader.read_u64::<LittleEndian>()?;
     for _ in 0..len {
-        let c = reader.read_u8().unwrap();
+        let c = reader.read_u8()?;
         v.push(c);
     }
-    Some(String::from_utf8(v).unwrap())
+    String::from_utf8(v).map_err(|e| ReadError::FromUtf8(e))
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -43,15 +44,21 @@ impl Header {
         magic.iter().zip(input.iter()).all(|(&x, &y)| x == y)
     }
 
-    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Option<Header> {
+    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Result<Header, ReadError> {
         let mut magic: [u8; 8] = [0; 8];
         let result = reader.read(&mut magic);
-        assert!(Header::check_magic(&magic));
-        assert_eq!(result.unwrap(), 8);
-        let header_size = reader.read_u64::<LittleEndian>().unwrap();
-        let major_version = reader.read_u32::<LittleEndian>().unwrap();
-        let minor_version = reader.read_u32::<LittleEndian>().unwrap();
-        let file_size = reader.read_u64::<LittleEndian>().unwrap();
+        match result {
+            Ok(n) if n < 8 => { return Err(ReadError::EndOfFile); },
+            Err(e) => { return Err(ReadError::Io(e)); },
+            _ => {},
+        }
+        if Header::check_magic(&magic) == false {
+            return Err(ReadError::Magic);
+        }
+        let header_size = reader.read_u64::<LittleEndian>()?;
+        let major_version = reader.read_u32::<LittleEndian>()?;
+        let minor_version = reader.read_u32::<LittleEndian>()?;
+        let file_size = reader.read_u64::<LittleEndian>()?;
         let hd = Header {
             magic_number : magic,
             header_size  : header_size,
@@ -59,7 +66,7 @@ impl Header {
             minor_version: minor_version,
             file_size    : file_size,
         };
-        Some(hd)
+        Ok(hd)
     }
 }
 
@@ -79,6 +86,10 @@ impl BlockHeader {
         }
     }
 
+    pub fn clone_name(&self) -> String {
+        String::from(self.name.clone())
+    }
+
     pub fn clone_magic() -> [u8; 8] {
         let mut magic = [0; 8];
         magic.clone_from_slice("block   ".as_bytes());
@@ -90,19 +101,25 @@ impl BlockHeader {
         magic.iter().zip(input.iter()).all(|(&x, &y)| x == y)
     }
 
-    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Option<Self> {
+    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Result<Self, ReadError> {
         let mut magic: [u8; 8] = [0; 8];
         let result = reader.read(&mut magic);
-        assert!(Self::check_magic(&magic));
-        assert_eq!(result.unwrap(), 8);
-        let name = read_string_from(reader).unwrap();
-        let size = reader.read_u64::<LittleEndian>().unwrap();
+        match result {
+            Ok(n) if n < 8 => { return Err(ReadError::EndOfFile); },
+            Err(e) => { return Err(e.into()); },
+            _ => {},
+        }
+        if Self::check_magic(&magic) == false {
+            return Err(ReadError::Magic);
+        }
+        let name = read_string_from(reader)?;
+        let size = reader.read_u64::<LittleEndian>()?;
         let hd = BlockHeader {
             magic : magic,
             name  : name,
             size  : size,
         };
-        Some(hd)
+        Ok(hd)
     }
 }
 
@@ -122,11 +139,11 @@ impl DataBlock {
         self.value_len
     }
 
-    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Option<Self> {
-        let index_len = reader.read_u64::<LittleEndian>().unwrap();
-        let value_len = reader.read_u64::<LittleEndian>().unwrap();
-        let length = reader.read_u64::<LittleEndian>().unwrap();
-        Some(DataBlock {
+    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Result<Self, ReadError> {
+        let index_len = reader.read_u64::<LittleEndian>()?;
+        let value_len = reader.read_u64::<LittleEndian>()?;
+        let length = reader.read_u64::<LittleEndian>()?;
+        Ok(DataBlock {
             index_len: index_len,
             value_len: value_len,
             length: length,
