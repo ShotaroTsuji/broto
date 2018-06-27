@@ -26,19 +26,19 @@ impl<R: io::Read> Reader<R> {
         }
     }
 
-    pub fn initialize(&mut self) -> Option<()> {
-        let header = Header::read_from(&mut self.stream).unwrap();
+    pub fn initialize(&mut self) -> Result<(), ReadError> {
+        let header = Header::read_from(&mut self.stream)?;
         self.header = Some(header);
-        Some(())
+        Ok(())
     }
 
-    pub fn next_block(&mut self) -> Option<Block> {
-        let bheader = BlockHeader::read_from(&mut self.stream).unwrap();
-        println!("block header : {:?}", bheader);
+    pub fn next_block(&mut self) -> Result<Block, ReadError> {
+        let bheader = BlockHeader::read_from(&mut self.stream)?;
+        //println!("block header : {:?}", bheader);
         match bheader.clone_name().as_str() {
-            "log" => Some(Block::Log(LogBlock::read_from(&mut self.stream).unwrap())),
-            "data" => Some(Block::Data(DataBlock::read_from(&mut self.stream).unwrap())),
-            _ => None,
+            "log" => LogBlock::read_from(&mut self.stream).map(|v| Block::Log(v)),
+            "data" => DataBlock::read_from(&mut self.stream).map(|v| Block::Data(v)),
+            _ => Err(ReadError::UndefinedBlock),
         }
     }
 }

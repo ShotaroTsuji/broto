@@ -4,6 +4,7 @@ use std;
 pub enum ReadError {
     EndOfFile,
     Magic,
+    UndefinedBlock,
     Io(std::io::Error),
     FromUtf8(std::string::FromUtf8Error),
 }

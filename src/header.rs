@@ -139,6 +139,10 @@ impl DataBlock {
         self.value_len
     }
 
+    pub fn length(&self) -> u64 {
+        self.length
+    }
+
     pub fn read_from<R: std::io::Read>(reader: &mut R) -> Result<Self, ReadError> {
         let index_len = reader.read_u64::<LittleEndian>()?;
         let value_len = reader.read_u64::<LittleEndian>()?;
@@ -213,19 +217,26 @@ pub struct LogBlock {
 }
 
 impl LogBlock {
-    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Option<Self> {
-        let secs = reader.read_u64::<LittleEndian>().unwrap();
-        let nanos = reader.read_u32::<LittleEndian>().unwrap();
-        println!("secs: {}, nanos: {}", secs, nanos);
+    pub fn program(&self) -> String {
+        self.program.clone()
+    }
+
+    pub fn info(&self) -> String {
+        self.info.clone()
+    }
+
+    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Result<Self, ReadError> {
+        let secs = reader.read_u64::<LittleEndian>()?;
+        let nanos = reader.read_u32::<LittleEndian>()?;
         let dur = std::time::Duration::new(secs, nanos);
-        let program = read_string_from(reader).unwrap();
-        let info = read_string_from(reader).unwrap();
+        let program = read_string_from(reader)?;
+        let info = read_string_from(reader)?;
         let log = LogBlock {
             time : std::time::SystemTime::now(),
             program : program,
             info : info,
         };
-        Some(log)
+        Ok(log)
     }
 }
 
