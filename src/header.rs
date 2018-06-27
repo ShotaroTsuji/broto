@@ -1,5 +1,16 @@
 use tupletype::TupleType;
 use std;
+use byteorder::{LittleEndian, ReadBytesExt};
+
+fn read_string_from<R: std::io::Read>(reader: &mut R) -> Option<String> {
+    let mut v = Vec::new();
+    let len = reader.read_u64::<LittleEndian>().unwrap();
+    for _ in 0..len {
+        let c = reader.read_u8().unwrap();
+        v.push(c);
+    }
+    Some(String::from_utf8(v).unwrap())
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Header {
@@ -22,6 +33,24 @@ impl Header {
             file_size     : file_size,
         }
     }
+
+    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Option<Header> {
+        let mut magic: [u8; 8] = [0; 8];
+        let result = reader.read(&mut magic);
+        assert_eq!(result.unwrap(), 8);
+        let header_size = reader.read_u64::<LittleEndian>().unwrap();
+        let major_version = reader.read_u32::<LittleEndian>().unwrap();
+        let minor_version = reader.read_u32::<LittleEndian>().unwrap();
+        let file_size = reader.read_u64::<LittleEndian>().unwrap();
+        let hd = Header {
+            magic_number : magic,
+            header_size  : header_size,
+            major_version: major_version,
+            minor_version: minor_version,
+            file_size    : file_size,
+        };
+        Some(hd)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -41,13 +70,26 @@ impl BlockHeader {
             size  : size,
         }
     }
+
+    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Option<Self> {
+        let mut magic: [u8; 8] = [0; 8];
+        let result = reader.read(&mut magic);
+        assert_eq!(result.unwrap(), 8);
+        let name = read_string_from(reader).unwrap();
+        let size = reader.read_u64::<LittleEndian>().unwrap();
+        let hd = BlockHeader {
+            magic : magic,
+            name  : name,
+            size  : size,
+        };
+        Some(hd)
+    }
 }
 
 #[derive(Serialize,Deserialize,Debug)]
 pub struct DataBlock {
     index_len  : u64,
     value_len  : u64,
-    byteorder  : u64,
     length     : u64,
 }
 
@@ -58,6 +100,17 @@ impl DataBlock {
 
     pub fn value_len(&self) -> u64 {
         self.value_len
+    }
+
+    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Option<Self> {
+        let index_len = reader.read_u64::<LittleEndian>().unwrap();
+        let value_len = reader.read_u64::<LittleEndian>().unwrap();
+        let length = reader.read_u64::<LittleEndian>().unwrap();
+        Some(DataBlock {
+            index_len: index_len,
+            value_len: value_len,
+            length: length,
+        })
     }
 }
 
@@ -110,7 +163,6 @@ impl DataBlockBuilder<u64, u64, u64> {
         DataBlock {
             index_len : self.index_len,
             value_len : self.value_len,
-            byteorder : 0,
             length    : self.length,
         }
     }
@@ -121,6 +173,23 @@ pub struct LogBlock {
     time    : std::time::SystemTime,
     program : String,
     info    : String,
+}
+
+impl LogBlock {
+    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Option<Self> {
+        let secs = reader.read_u64::<LittleEndian>().unwrap();
+        let nanos = reader.read_u32::<LittleEndian>().unwrap();
+        println!("secs: {}, nanos: {}", secs, nanos);
+        let dur = std::time::Duration::new(secs, nanos);
+        let program = read_string_from(reader).unwrap();
+        let info = read_string_from(reader).unwrap();
+        let log = LogBlock {
+            time : std::time::SystemTime::now(),
+            program : program,
+            info : info,
+        };
+        Some(log)
+    }
 }
 
 #[derive(Debug)]
@@ -171,11 +240,4 @@ impl<ProgType, InfoType> LogBlockBuilder<ProgType, InfoType> {
         self.time = Some(time);
         self
     }
-}
-
-
-#[derive(Debug)]
-pub enum ByteOrder {
-    LittleEndian,
-    BigEndian,
 }

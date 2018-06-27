@@ -1,11 +1,13 @@
 extern crate tsbin;
 
+use std::io::Cursor;
+
 use tsbin::tupletype::TupleTypeBuilder;
 use tsbin::tupletype::TupleType;
 use tsbin::tupletype::PrimitiveType;
 use tsbin::tupletype::Type;
 use tsbin::header::Header;
-use tsbin::header::ByteOrder;
+use tsbin::header::BlockHeader;
 use tsbin::header::LogBlock;
 use tsbin::header::LogBlockBuilder;
 use tsbin::header::{DataBlock,DataBlockBuilder};
@@ -118,4 +120,19 @@ fn main() {
     let buf = writer.get_stream();
     println!("buf: {:?}", buf);
 
+    let mut cur = Cursor::new(buf);
+    let hd = Header::read_from(&mut cur).unwrap();
+    println!("header : {:?}", hd);
+
+    let hd = BlockHeader::read_from(&mut cur).unwrap();
+    println!("block header : {:?}", hd);
+
+    let log = LogBlock::read_from(&mut cur).unwrap();
+    println!("log : {:?}", log);
+
+    let hd = BlockHeader::read_from(&mut cur).unwrap();
+    println!("block header : {:?}", hd);
+
+    let data = DataBlock::read_from(&mut cur).unwrap();
+    println!("data block : {:?}", data);
 }

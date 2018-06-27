@@ -2,6 +2,8 @@
 extern crate serde_derive;
 extern crate serde;
 
+extern crate byteorder;
+
 pub mod tupletype;
 pub mod header;
 pub mod writer;
