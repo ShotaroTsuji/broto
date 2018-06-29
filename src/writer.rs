@@ -3,6 +3,7 @@ extern crate bincode;
 use std;
 use std::io;
 use std::marker::PhantomData;
+use byteorder::{WriteBytesExt,LittleEndian};
 use header::{Header, BlockHeader, LogBlock, DataBlock};
 use serde;
 
@@ -89,11 +90,11 @@ pub struct DataWriter<'a, W: 'a> {
 }
 
 impl<'a, W> DataWriter<'a, W> where W: 'a + std::io::Write {
-    pub fn write_value(&mut self, index: f64, values: &[f64]) -> Result<usize> {
-        let index_bin: Vec<u8> = bincode::serialize(&index)?;
-        let value_bin: Vec<u8> = bincode::serialize(&values[0..self.value_len])?;
-        let bytes1 = self.stream.write(&index_bin)?;
-        let bytes2 = self.stream.write(&value_bin)?;
-        Ok(bytes1 + bytes2)
+    pub fn write_value(&mut self, index: f64, values: &[f64]) -> Result<()> {
+        let _ = self.stream.write_f64::<LittleEndian>(index)?;
+        for &x in values.iter() {
+            let _ = self.stream.write_f64::<LittleEndian>(x)?;
+        }
+        Ok(())
     }
 }

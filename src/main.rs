@@ -67,6 +67,16 @@ fn main() {
                 println!("    index_len: {}", data.index_len());
                 println!("    value_len: {}", data.value_len());
                 println!("    length   : {}", data.length());
+                for ent in reader.data_entries(&data) {
+                    let ent = ent.unwrap();
+                    let index = ent.0;
+                    let value = ent.1;
+                    print!("    {}:", index);
+                    for x in value.iter() {
+                        print!(" {},", x);
+                    }
+                    println!("");
+                }
             },
             _ => { break; }
         }
