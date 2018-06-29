@@ -4,7 +4,7 @@ use std::io::Cursor;
 
 use tsbin::header::Header;
 use tsbin::header::LogBlockBuilder;
-use tsbin::header::DataBlockBuilder;
+use tsbin::header::FloatTSBlockBuilder;
 use tsbin::writer::Writer;
 use tsbin::reader::{Reader, Block};
 
@@ -20,7 +20,7 @@ fn main() {
     let _ = writer.write_header(0).unwrap();
     let _ = writer.write_log(log).unwrap();
 
-    let data = DataBlockBuilder::new()
+    let data = FloatTSBlockBuilder::new()
         .index_len(1)
         .value_len(1)
         .length(10)
@@ -28,7 +28,7 @@ fn main() {
     println!("{:?}", data);
 
     {
-        let mut dw = writer.write_data(data).unwrap();
+        let mut dw = writer.write_float_ts(data).unwrap();
         println!("{:?}", dw);
         for i in 0..10 {
             let x = vec![0.1 * i as f64];
@@ -58,8 +58,8 @@ fn main() {
                 println!("    program: {}", log.program());
                 println!("    info   : {}", log.info());
             },
-            Block::Data(data) => {
-                println!("Data block was found.");
+            Block::FloatTS(data) => {
+                println!("FloatTS block was found.");
                 println!("    index_len: {}", data.index_len());
                 println!("    value_len: {}", data.value_len());
                 println!("    length   : {}", data.length());

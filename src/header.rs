@@ -158,13 +158,13 @@ impl BlockHeader {
 }
 
 #[derive(Debug)]
-pub struct DataBlock {
+pub struct FloatTSBlock {
     index_len  : u64,
     value_len  : u64,
     length     : u64,
 }
 
-impl DataBlock {
+impl FloatTSBlock {
     pub fn index_len(&self) -> u64 {
         self.index_len
     }
@@ -185,7 +185,7 @@ impl DataBlock {
         let index_len = reader.read_u64::<LittleEndian>()?;
         let value_len = reader.read_u64::<LittleEndian>()?;
         let length = reader.read_u64::<LittleEndian>()?;
-        Ok(DataBlock {
+        Ok(FloatTSBlock {
             index_len: index_len,
             value_len: value_len,
             length: length,
@@ -201,15 +201,15 @@ impl DataBlock {
 }
 
 #[derive(Debug)]
-pub struct DataBlockBuilder<IdxLenType,ValLenType,LengthType> {
+pub struct FloatTSBlockBuilder<IdxLenType,ValLenType,LengthType> {
     index_len : IdxLenType,
     value_len : ValLenType,
     length    : LengthType,
 }
 
-impl DataBlockBuilder<(), (), ()> {
+impl FloatTSBlockBuilder<(), (), ()> {
     pub fn new() -> Self {
-        DataBlockBuilder {
+        FloatTSBlockBuilder {
             index_len : (),
             value_len : (),
             length : (),
@@ -217,25 +217,25 @@ impl DataBlockBuilder<(), (), ()> {
     }
 }
 
-impl<IdxLenType, ValLenType, LengthType> DataBlockBuilder<IdxLenType, ValLenType, LengthType> {
-    pub fn index_len(self, len: u64) -> DataBlockBuilder<u64, ValLenType, LengthType> {
-        DataBlockBuilder {
+impl<IdxLenType, ValLenType, LengthType> FloatTSBlockBuilder<IdxLenType, ValLenType, LengthType> {
+    pub fn index_len(self, len: u64) -> FloatTSBlockBuilder<u64, ValLenType, LengthType> {
+        FloatTSBlockBuilder {
             index_len : len,
             value_len : self.value_len,
             length    : self.length,
         }
     }
 
-    pub fn value_len(self, len: u64) -> DataBlockBuilder<IdxLenType, u64, LengthType> {
-        DataBlockBuilder {
+    pub fn value_len(self, len: u64) -> FloatTSBlockBuilder<IdxLenType, u64, LengthType> {
+        FloatTSBlockBuilder {
             index_len : self.index_len,
             value_len : len,
             length    : self.length,
         }
     }
 
-    pub fn length(self, len: u64) -> DataBlockBuilder<IdxLenType, ValLenType, u64> {
-        DataBlockBuilder {
+    pub fn length(self, len: u64) -> FloatTSBlockBuilder<IdxLenType, ValLenType, u64> {
+        FloatTSBlockBuilder {
             index_len : self.index_len,
             value_len : self.value_len,
             length : len,
@@ -243,10 +243,10 @@ impl<IdxLenType, ValLenType, LengthType> DataBlockBuilder<IdxLenType, ValLenType
     }
 }
 
-impl DataBlockBuilder<u64, u64, u64> {
-    pub fn build(self) -> DataBlock {
+impl FloatTSBlockBuilder<u64, u64, u64> {
+    pub fn build(self) -> FloatTSBlock {
         assert_eq!(self.index_len, 1);
-        DataBlock {
+        FloatTSBlock {
             index_len : self.index_len,
             value_len : self.value_len,
             length    : self.length,

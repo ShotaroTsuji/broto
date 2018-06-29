@@ -2,7 +2,7 @@ use std;
 use std::io;
 use std::marker::PhantomData;
 use byteorder::{WriteBytesExt,LittleEndian};
-use header::{Header, BlockHeader, LogBlock, DataBlock};
+use header::{Header, BlockHeader, LogBlock, FloatTSBlock};
 use error::WriteError;
 
 type Result<T> = std::result::Result<T, WriteError>;
@@ -30,11 +30,11 @@ impl<W: io::Write> Writer<W> {
         Ok(())
     }
 
-    pub fn write_data(&mut self, block: DataBlock) -> Result<DataWriter<W>> {
-        let header = BlockHeader::new("data", block.size() as u64);
+    pub fn write_float_ts(&mut self, block: FloatTSBlock) -> Result<FloatTSWriter<W>> {
+        let header = BlockHeader::new("float-ts", block.size() as u64);
         header.write_into(&mut self.stream)?;
         block.write_into(&mut self.stream)?;
-        Ok(DataWriter {
+        Ok(FloatTSWriter {
             value_len: block.value_len() as usize,
             stream: &mut self.stream,
             phantom: PhantomData,
@@ -47,13 +47,13 @@ impl<W: io::Write> Writer<W> {
 }
 
 #[derive(Debug)]
-pub struct DataWriter<'a, W: 'a> {
+pub struct FloatTSWriter<'a, W: 'a> {
     value_len : usize,
     stream : &'a mut W,
     phantom: PhantomData<&'a W>,
 }
 
-impl<'a, W> DataWriter<'a, W> where W: 'a + std::io::Write {
+impl<'a, W> FloatTSWriter<'a, W> where W: 'a + std::io::Write {
     pub fn write_value(&mut self, index: f64, values: &[f64]) -> Result<()> {
         let _ = self.stream.write_f64::<LittleEndian>(index)?;
         for &x in values.iter() {

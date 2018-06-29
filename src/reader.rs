@@ -2,13 +2,13 @@ use std;
 use std::io;
 use std::marker::PhantomData;
 use byteorder::{LittleEndian, ReadBytesExt};
-use header::{Header, BlockHeader, LogBlock, DataBlock};
+use header::{Header, BlockHeader, LogBlock, FloatTSBlock};
 use error::ReadError;
 
 #[derive(Debug)]
 pub enum Block {
     Log(LogBlock),
-    Data(DataBlock),
+    FloatTS(FloatTSBlock),
 }
 
 #[derive(Debug)]
@@ -36,13 +36,13 @@ impl<R: io::Read> Reader<R> {
         //println!("block header : {:?}", bheader);
         match bheader.clone_name().as_str() {
             "log" => LogBlock::read_from(&mut self.stream).map(|v| Block::Log(v)),
-            "data" => DataBlock::read_from(&mut self.stream).map(|v| Block::Data(v)),
+            "float-ts" => FloatTSBlock::read_from(&mut self.stream).map(|v| Block::FloatTS(v)),
             _ => Err(ReadError::UndefinedBlock),
         }
     }
 
-    pub fn data_entries(&mut self, data: &DataBlock) -> DataReader<R> {
-        DataReader {
+    pub fn data_entries(&mut self, data: &FloatTSBlock) -> FloatTSReader<R> {
+        FloatTSReader {
             index_len: data.index_len() as usize,
             value_len: data.value_len() as usize,
             remaining: data.length() as usize,
@@ -53,7 +53,7 @@ impl<R: io::Read> Reader<R> {
 }
 
 #[derive(Debug)]
-pub struct DataReader<'a, R: 'a> {
+pub struct FloatTSReader<'a, R: 'a> {
     index_len : usize,
     value_len : usize,
     remaining : usize,
@@ -61,7 +61,7 @@ pub struct DataReader<'a, R: 'a> {
     phantom: PhantomData<&'a R>,
 }
 
-impl<'a, R> Iterator for DataReader<'a, R> where R: 'a + std::io::Read {
+impl<'a, R> Iterator for FloatTSReader<'a, R> where R: 'a + std::io::Read {
     type Item = Result<(f64,Vec<f64>), ReadError>;
 
     fn next(&mut self) -> Option<Result<(f64,Vec<f64>), ReadError>> {
