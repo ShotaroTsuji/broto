@@ -270,6 +270,10 @@ impl LogBlock {
         self.info.clone()
     }
 
+    pub fn time(&self) -> std::time::Duration {
+        self.time.clone()
+    }
+
     pub fn size(&self) -> usize {
         8 + 4 + (8 + self.program.len()) + (8 + self.info.len())
     }
