@@ -1,19 +1,20 @@
 use std;
+use std::io;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use error::{WriteError, ReadError};
+use error::{Result, Error};
 
 
-fn read_string_from<R: std::io::Read>(reader: &mut R) -> Result<String, ReadError> {
+fn read_string_from<R: io::Read>(reader: &mut R) -> Result<String> {
     let mut v = Vec::new();
     let len = reader.read_u64::<LittleEndian>()?;
     for _ in 0..len {
         let c = reader.read_u8()?;
         v.push(c);
     }
-    String::from_utf8(v).map_err(|e| ReadError::FromUtf8(e))
+    String::from_utf8(v).map_err(|e| Error::FromUtf8(e))
 }
 
-fn write_string_into<W: std::io::Write>(string: &String, writer: &mut W) -> Result<(), WriteError> {
+fn write_string_into<W: io::Write>(string: &String, writer: &mut W) -> Result<()> {
     writer.write_u64::<LittleEndian>(string.len() as u64)?;
     for c in string.bytes() {
         writer.write_u8(c)?;
@@ -52,16 +53,16 @@ impl Header {
         magic.iter().zip(input.iter()).all(|(&x, &y)| x == y)
     }
 
-    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Result<Header, ReadError> {
+    pub fn read_from<R: io::Read>(reader: &mut R) -> Result<Self> {
         let mut magic: [u8; 8] = [0; 8];
         let result = reader.read(&mut magic);
         match result {
-            Ok(n) if n < 8 => { return Err(ReadError::EndOfFile); },
-            Err(e) => { return Err(ReadError::Io(e)); },
+            Ok(n) if n < 8 => { return Err(Error::EndOfFile); },
+            Err(e) => { return Err(Error::Io(e)); },
             _ => {},
         }
         if Header::check_magic(&magic) == false {
-            return Err(ReadError::Magic);
+            return Err(Error::Magic);
         }
         let header_size = reader.read_u64::<LittleEndian>()?;
         let major_version = reader.read_u32::<LittleEndian>()?;
@@ -77,10 +78,10 @@ impl Header {
         Ok(hd)
     }
 
-    pub fn write_into<W: std::io::Write>(&self, writer: &mut W) -> Result<(), WriteError> {
+    pub fn write_into<W: io::Write>(&self, writer: &mut W) -> Result<()> {
         let result = writer.write(&self.magic_number);
         match result {
-            Ok(n) if n < 8 => { return Err(WriteError::EndOfFile); },
+            Ok(n) if n < 8 => { return Err(Error::EndOfFile); },
             Err(e) => { return Err(e.into()); },
             _ => {},
         }
@@ -123,16 +124,16 @@ impl BlockHeader {
         magic.iter().zip(input.iter()).all(|(&x, &y)| x == y)
     }
 
-    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Result<Self, ReadError> {
+    pub fn read_from<R: io::Read>(reader: &mut R) -> Result<Self> {
         let mut magic: [u8; 8] = [0; 8];
         let result = reader.read(&mut magic);
         match result {
-            Ok(n) if n < 8 => { return Err(ReadError::EndOfFile); },
+            Ok(n) if n < 8 => { return Err(Error::EndOfFile); },
             Err(e) => { return Err(e.into()); },
             _ => {},
         }
         if Self::check_magic(&magic) == false {
-            return Err(ReadError::Magic);
+            return Err(Error::Magic);
         }
         let name = read_string_from(reader)?;
         let size = reader.read_u64::<LittleEndian>()?;
@@ -144,10 +145,10 @@ impl BlockHeader {
         Ok(hd)
     }
 
-    pub fn write_into<W: std::io::Write>(&self, writer: &mut W) -> Result<(), WriteError> {
+    pub fn write_into<W: io::Write>(&self, writer: &mut W) -> Result<()> {
         let result = writer.write(&self.magic);
         match result {
-            Ok(n) if n < 8 => { return Err(WriteError::EndOfFile); },
+            Ok(n) if n < 8 => { return Err(Error::EndOfFile); },
             Err(e) => { return Err(e.into()); },
             _ => {},
         }
@@ -185,7 +186,7 @@ impl FloatTSBlock {
         8 + 8 + 8
     }
 
-    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Result<Self, ReadError> {
+    pub fn read_from<R: io::Read>(reader: &mut R) -> Result<Self> {
         let index_len = reader.read_u64::<LittleEndian>()?;
         let value_len = reader.read_u64::<LittleEndian>()?;
         let length = reader.read_u64::<LittleEndian>()?;
@@ -196,7 +197,7 @@ impl FloatTSBlock {
         })
     }
 
-    pub fn write_into<W: std::io::Write>(&self, writer: &mut W) -> Result<(), WriteError> {
+    pub fn write_into<W: io::Write>(&self, writer: &mut W) -> Result<()> {
         writer.write_u64::<LittleEndian>(self.index_len)?;
         writer.write_u64::<LittleEndian>(self.value_len)?;
         writer.write_u64::<LittleEndian>(self.length)?;
@@ -282,7 +283,7 @@ impl LogBlock {
         8 + 4 + (8 + self.program.len()) + (8 + self.info.len())
     }
 
-    pub fn read_from<R: std::io::Read>(reader: &mut R) -> Result<Self, ReadError> {
+    pub fn read_from<R: io::Read>(reader: &mut R) -> Result<Self> {
         let secs = reader.read_u64::<LittleEndian>()?;
         let nanos = reader.read_u32::<LittleEndian>()?;
         let dur = std::time::Duration::new(secs, nanos);
@@ -296,7 +297,7 @@ impl LogBlock {
         Ok(log)
     }
 
-    pub fn write_into<W: std::io::Write>(&self, writer: &mut W) -> Result<(), WriteError> {
+    pub fn write_into<W: io::Write>(&self, writer: &mut W) -> Result<()> {
         writer.write_u64::<LittleEndian>(self.time.as_secs())?;
         writer.write_u32::<LittleEndian>(self.time.subsec_nanos())?;
         write_string_into(&self.program, writer)?;
@@ -325,7 +326,9 @@ impl LogBlockBuilder<(), ()> {
 impl LogBlockBuilder<String, String> {
     pub fn build(self) -> LogBlock {
         LogBlock {
-            time    : if let Some(t) = self.time { t } else { std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap() },
+            time    : self.time.unwrap_or(std::time::SystemTime::now()
+                                          .duration_since(std::time::UNIX_EPOCH)
+                                          .unwrap()),
             program : self.program,
             info    : self.info,
         }

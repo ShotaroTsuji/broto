@@ -1,7 +1,7 @@
 use std;
 
 #[derive(Debug)]
-pub enum ReadError {
+pub enum Error {
     EndOfFile,
     Magic,
     UndefinedBlock,
@@ -9,21 +9,10 @@ pub enum ReadError {
     FromUtf8(std::string::FromUtf8Error),
 }
 
-impl From<std::io::Error> for ReadError {
+impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Self {
-        ReadError::Io(err)
+        Error::Io(err)
     }
 }
 
-#[derive(Debug)]
-pub enum WriteError {
-    EndOfFile,
-    Magic,
-    Io(std::io::Error),
-}
-
-impl From<std::io::Error> for WriteError {
-    fn from(error: std::io::Error) -> Self {
-        WriteError::Io(error)
-    }
-}
+pub type Result<T> = std::result::Result<T, Error>;

@@ -1,12 +1,10 @@
-use std;
 use std::io;
 use std::io::SeekFrom;
 use std::marker::PhantomData;
 use byteorder::{WriteBytesExt,LittleEndian};
 use header::{Header, BlockHeader, LogBlock, FloatTSBlock};
-use error::WriteError;
+use error::Result;
 
-type Result<T> = std::result::Result<T, WriteError>;
 
 pub struct Writer<W: io::Write + io::Seek> {
     stream: W,
@@ -83,6 +81,6 @@ impl<'a, W> FloatTSWriter<'a, W> where W: 'a + io::Write + io::Seek {
 
 impl<'a, W> Drop for FloatTSWriter<'a, W> where W: 'a + io::Write + io::Seek {
     fn drop(&mut self) {
-        self.finalize();
+        self.finalize().unwrap();
     }
 }

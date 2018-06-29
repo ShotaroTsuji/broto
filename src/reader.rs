@@ -1,9 +1,8 @@
-use std;
 use std::io;
 use std::marker::PhantomData;
 use byteorder::{LittleEndian, ReadBytesExt};
 use header::{Header, BlockHeader, LogBlock, FloatTSBlock};
-use error::ReadError;
+use error::{Result, Error};
 
 #[derive(Debug)]
 pub enum Block {
@@ -25,19 +24,19 @@ impl<R: io::Read> Reader<R> {
         }
     }
 
-    pub fn initialize(&mut self) -> Result<(), ReadError> {
+    pub fn initialize(&mut self) -> Result<()> {
         let header = Header::read_from(&mut self.stream)?;
         self.header = Some(header);
         Ok(())
     }
 
-    pub fn next_block(&mut self) -> Result<Block, ReadError> {
+    pub fn next_block(&mut self) -> Result<Block> {
         let bheader = BlockHeader::read_from(&mut self.stream)?;
         //println!("block header : {:?}", bheader);
         match bheader.clone_name().as_str() {
             "log" => LogBlock::read_from(&mut self.stream).map(|v| Block::Log(v)),
             "float-ts" => FloatTSBlock::read_from(&mut self.stream).map(|v| Block::FloatTS(v)),
-            _ => Err(ReadError::UndefinedBlock),
+            _ => Err(Error::UndefinedBlock),
         }
     }
 
@@ -61,10 +60,10 @@ pub struct FloatTSReader<'a, R: 'a> {
     phantom: PhantomData<&'a R>,
 }
 
-impl<'a, R> Iterator for FloatTSReader<'a, R> where R: 'a + std::io::Read {
-    type Item = Result<(f64,Vec<f64>), ReadError>;
+impl<'a, R> Iterator for FloatTSReader<'a, R> where R: 'a + io::Read {
+    type Item = Result<(f64,Vec<f64>)>;
 
-    fn next(&mut self) -> Option<Result<(f64,Vec<f64>), ReadError>> {
+    fn next(&mut self) -> Option<Self::Item> {
         if self.remaining == 0 {
             return None;
         }
