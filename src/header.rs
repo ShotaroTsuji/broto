@@ -1,7 +1,7 @@
-use tupletype::TupleType;
 use std;
-use byteorder::{LittleEndian, ReadBytesExt};
-use error::ReadError;
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use error::{WriteError, ReadError};
+
 
 fn read_string_from<R: std::io::Read>(reader: &mut R) -> Result<String, ReadError> {
     let mut v = Vec::new();
@@ -13,7 +13,15 @@ fn read_string_from<R: std::io::Read>(reader: &mut R) -> Result<String, ReadErro
     String::from_utf8(v).map_err(|e| ReadError::FromUtf8(e))
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+fn write_string_into<W: std::io::Write>(string: &String, writer: &mut W) -> Result<(), WriteError> {
+    writer.write_u64::<LittleEndian>(string.len() as u64)?;
+    for c in string.bytes() {
+        writer.write_u8(c)?;
+    }
+    Ok(())
+}
+
+#[derive(Debug)]
 pub struct Header {
     magic_number    : [u8; 8],
     header_size     : u64,
@@ -68,9 +76,23 @@ impl Header {
         };
         Ok(hd)
     }
+
+    pub fn write_into<W: std::io::Write>(&self, writer: &mut W) -> Result<(), WriteError> {
+        let result = writer.write(&self.magic_number);
+        match result {
+            Ok(n) if n < 8 => { return Err(WriteError::EndOfFile); },
+            Err(e) => { return Err(e.into()); },
+            _ => {},
+        }
+        writer.write_u64::<LittleEndian>(self.header_size)?;
+        writer.write_u32::<LittleEndian>(self.major_version)?;
+        writer.write_u32::<LittleEndian>(self.minor_version)?;
+        writer.write_u64::<LittleEndian>(self.file_size)?;
+        Ok(())
+    }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 pub struct BlockHeader {
     magic : [u8; 8],
     name  : String,
@@ -121,9 +143,21 @@ impl BlockHeader {
         };
         Ok(hd)
     }
+
+    pub fn write_into<W: std::io::Write>(&self, writer: &mut W) -> Result<(), WriteError> {
+        let result = writer.write(&self.magic);
+        match result {
+            Ok(n) if n < 8 => { return Err(WriteError::EndOfFile); },
+            Err(e) => { return Err(e.into()); },
+            _ => {},
+        }
+        write_string_into(&self.name, writer)?;
+        writer.write_u64::<LittleEndian>(self.size)?;
+        Ok(())
+    }
 }
 
-#[derive(Serialize,Deserialize,Debug)]
+#[derive(Debug)]
 pub struct DataBlock {
     index_len  : u64,
     value_len  : u64,
@@ -143,6 +177,10 @@ impl DataBlock {
         self.length
     }
 
+    pub fn size(&self) -> usize {
+        8 + 8 + 8
+    }
+
     pub fn read_from<R: std::io::Read>(reader: &mut R) -> Result<Self, ReadError> {
         let index_len = reader.read_u64::<LittleEndian>()?;
         let value_len = reader.read_u64::<LittleEndian>()?;
@@ -152,6 +190,13 @@ impl DataBlock {
             value_len: value_len,
             length: length,
         })
+    }
+
+    pub fn write_into<W: std::io::Write>(&self, writer: &mut W) -> Result<(), WriteError> {
+        writer.write_u64::<LittleEndian>(self.index_len)?;
+        writer.write_u64::<LittleEndian>(self.value_len)?;
+        writer.write_u64::<LittleEndian>(self.length)?;
+        Ok(())
     }
 }
 
@@ -209,9 +254,9 @@ impl DataBlockBuilder<u64, u64, u64> {
     }
 }
 
-#[derive(Serialize,Deserialize,Debug)]
+#[derive(Debug)]
 pub struct LogBlock {
-    time    : std::time::SystemTime,
+    time    : std::time::Duration,
     program : String,
     info    : String,
 }
@@ -225,6 +270,10 @@ impl LogBlock {
         self.info.clone()
     }
 
+    pub fn size(&self) -> usize {
+        8 + 4 + (8 + self.program.len()) + (8 + self.info.len())
+    }
+
     pub fn read_from<R: std::io::Read>(reader: &mut R) -> Result<Self, ReadError> {
         let secs = reader.read_u64::<LittleEndian>()?;
         let nanos = reader.read_u32::<LittleEndian>()?;
@@ -232,17 +281,25 @@ impl LogBlock {
         let program = read_string_from(reader)?;
         let info = read_string_from(reader)?;
         let log = LogBlock {
-            time : std::time::SystemTime::now(),
+            time : dur,
             program : program,
             info : info,
         };
         Ok(log)
     }
+
+    pub fn write_into<W: std::io::Write>(&self, writer: &mut W) -> Result<(), WriteError> {
+        writer.write_u64::<LittleEndian>(self.time.as_secs())?;
+        writer.write_u32::<LittleEndian>(self.time.subsec_nanos())?;
+        write_string_into(&self.program, writer)?;
+        write_string_into(&self.info, writer)?;
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
 pub struct LogBlockBuilder<ProgType, InfoType> {
-    time    : Option<std::time::SystemTime>,
+    time    : Option<std::time::Duration>,
     program : ProgType,
     info    : InfoType,
 }
@@ -260,7 +317,7 @@ impl LogBlockBuilder<(), ()> {
 impl LogBlockBuilder<String, String> {
     pub fn build(self) -> LogBlock {
         LogBlock {
-            time    : if let Some(t) = self.time { t } else { std::time::SystemTime::now() },
+            time    : if let Some(t) = self.time { t } else { std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap() },
             program : self.program,
             info    : self.info,
         }
@@ -284,7 +341,7 @@ impl<ProgType, InfoType> LogBlockBuilder<ProgType, InfoType> {
         }
     }
 
-    pub fn time(mut self, time: std::time::SystemTime) -> Self {
+    pub fn time(mut self, time: std::time::Duration) -> Self {
         self.time = Some(time);
         self
     }

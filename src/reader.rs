@@ -1,5 +1,3 @@
-extern crate bincode;
-
 use std;
 use std::io;
 use std::marker::PhantomData;

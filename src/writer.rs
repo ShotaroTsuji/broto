@@ -1,29 +1,9 @@
-extern crate bincode;
-
 use std;
 use std::io;
 use std::marker::PhantomData;
 use byteorder::{WriteBytesExt,LittleEndian};
 use header::{Header, BlockHeader, LogBlock, DataBlock};
-use serde;
-
-#[derive(Debug)]
-pub enum WriteError {
-    Io(io::Error),
-    Encode(bincode::Error),
-}
-
-impl From<io::Error> for WriteError {
-    fn from(error: io::Error) -> Self {
-        WriteError::Io(error)
-    }
-}
-
-impl From<bincode::Error> for WriteError {
-    fn from(error: bincode::Error) -> Self {
-        WriteError::Encode(error)
-    }
-}
+use error::WriteError;
 
 type Result<T> = std::result::Result<T, WriteError>;
 
@@ -38,38 +18,22 @@ impl<W: io::Write> Writer<W> {
         }
     }
 
-    pub fn write_header(&mut self, file_size: u64) -> Result<usize> {
+    pub fn write_header(&mut self, file_size: u64) -> Result<()> {
         let header = Header::new(file_size);
-        let header_bin: Vec<u8> = bincode::serialize(&header)?;
-        println!("fn Write::write_header");
-        println!("  header        : {:?}", header);
-        println!("  header binary : {:?}", header_bin);
-        println!("  header size   : {}", header_bin.len());
-        self.stream.write(&header_bin).map_err(|e| e.into())
+        header.write_into(&mut self.stream)
     }
 
-    pub fn write_log(&mut self, log: LogBlock) -> Result<usize> {
-        let log_bin: Vec<u8> = bincode::serialize(&log)?;
-        let header = BlockHeader::new("log", log_bin.len() as u64);
-        let header_bin: Vec<u8> = bincode::serialize(&header)?;
-        println!("fn Write::write_log");
-        println!("  header        : {:?}", header);
-        println!("  log           : {:?}", log);
-        println!("  header binary : {:?}", header_bin);
-        println!("  log binary    : {:?}", log_bin);
-        println!("  header size   : {:?}", header_bin.len());
-        println!("  log    size   : {:?}", log_bin.len());
-        let bytes1 = self.stream.write(&header_bin)?;
-        let bytes2 = self.stream.write(&log_bin)?;
-        Ok(bytes1 + bytes2)
+    pub fn write_log(&mut self, log: LogBlock) -> Result<()> {
+        let header = BlockHeader::new("log", log.size() as u64);
+        header.write_into(&mut self.stream)?;
+        log.write_into(&mut self.stream)?;
+        Ok(())
     }
 
     pub fn write_data(&mut self, block: DataBlock) -> Result<DataWriter<W>> {
-        let block_bin: Vec<u8> = bincode::serialize(&block)?;
-        let header = BlockHeader::new("data", block_bin.len() as u64);
-        let header_bin: Vec<u8> = bincode::serialize(&header)?;
-        self.stream.write(&header_bin)?;
-        self.stream.write(&block_bin)?;
+        let header = BlockHeader::new("data", block.size() as u64);
+        header.write_into(&mut self.stream)?;
+        block.write_into(&mut self.stream)?;
         Ok(DataWriter {
             value_len: block.value_len() as usize,
             stream: &mut self.stream,

@@ -3,10 +3,8 @@ extern crate tsbin;
 use std::io::Cursor;
 
 use tsbin::header::Header;
-use tsbin::header::BlockHeader;
-use tsbin::header::LogBlock;
 use tsbin::header::LogBlockBuilder;
-use tsbin::header::{DataBlock,DataBlockBuilder};
+use tsbin::header::DataBlockBuilder;
 use tsbin::writer::Writer;
 use tsbin::reader::{Reader, Block};
 
@@ -19,10 +17,8 @@ fn main() {
 
     let buf: Vec<u8> = Vec::new();
     let mut writer = Writer::new(buf);
-    let size = writer.write_header(0).unwrap();
-    println!("written size = {}", size);
-    let size = writer.write_log(log).unwrap();
-    println!("written size = {}", size);
+    let _ = writer.write_header(0).unwrap();
+    let _ = writer.write_log(log).unwrap();
 
     let data = DataBlockBuilder::new()
         .index_len(1)
@@ -78,7 +74,6 @@ fn main() {
                     println!("");
                 }
             },
-            _ => { break; }
         }
     }
 }

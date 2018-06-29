@@ -15,4 +15,15 @@ impl From<std::io::Error> for ReadError {
     }
 }
 
+#[derive(Debug)]
+pub enum WriteError {
+    EndOfFile,
+    Magic,
+    Io(std::io::Error),
+}
 
+impl From<std::io::Error> for WriteError {
+    fn from(error: std::io::Error) -> Self {
+        WriteError::Io(error)
+    }
+}
