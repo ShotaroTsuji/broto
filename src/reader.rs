@@ -32,7 +32,6 @@ impl<R: io::Read> Reader<R> {
 
     pub fn next_block(&mut self) -> Result<Block> {
         let bheader = BlockHeader::read_from(&mut self.stream)?;
-        //println!("block header : {:?}", bheader);
         match bheader.clone_name().as_str() {
             "log" => LogBlock::read_from(&mut self.stream).map(|v| Block::Log(v)),
             "float-ts" => FloatTSBlock::read_from(&mut self.stream).map(|v| Block::FloatTS(v)),
@@ -40,7 +39,7 @@ impl<R: io::Read> Reader<R> {
         }
     }
 
-    pub fn data_entries(&mut self, data: &FloatTSBlock) -> FloatTSReader<R> {
+    pub fn float_ts_entries(&mut self, data: &FloatTSBlock) -> FloatTSReader<R> {
         FloatTSReader {
             index_len: data.index_len() as usize,
             value_len: data.value_len() as usize,

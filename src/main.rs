@@ -7,13 +7,14 @@ use tsbin::header::LogBlockBuilder;
 use tsbin::header::FloatTSBlockBuilder;
 use tsbin::writer::Writer;
 use tsbin::reader::{Reader, Block};
+use tsbin::error::Error;
 
 fn main() {
     let hd = Header::new(0);
-    println!("{:?}", hd);
+    println!("Header: {:?}", hd);
 
     let log = LogBlockBuilder::new().program("tsbin").info("creation").build();
-    println!("log: {:?}", log);
+    println!("Log block: {:?}", log);
 
     let buf: Vec<u8> = Vec::new();
     let cur = Cursor::new(buf);
@@ -25,30 +26,32 @@ fn main() {
         .index_len(1)
         .value_len(1)
         .build();
-    println!("{:?}", data);
+    println!("FloatTS block: {:?}", data);
 
     {
         let mut dw = writer.write_float_ts(data).unwrap();
-        println!("{:?}", dw);
         for i in 0..20 {
             let x = vec![0.1 * i as f64];
-            println!("write {:?} ----> {:?}", x, dw.write_value(i as f64, &x));
+            println!("write {:?} ----> {:?}", x, dw.write_entry(i as f64, &x));
         }
     }
 
     let buf = writer.into_stream().into_inner();
-    println!("buf: {:?}", buf);
 
     let cur = Cursor::new(buf);
     let mut reader = Reader::new(cur);
     let _ = reader.initialize().unwrap();
 
-    println!("reader: {:?}", reader);
-
     loop {
         let result = reader.next_block();
         match result {
-            Err(e) => { break; },
+            Err(e) => {
+                match e {
+                    Error::EndOfFile => {},
+                    _ => { println!("Error: {}", e); },
+                }
+                break;
+            },
             _ => {},
         }
         let block = result.unwrap();
@@ -64,7 +67,7 @@ fn main() {
                 println!("    index_len: {}", data.index_len());
                 println!("    value_len: {}", data.value_len());
                 println!("    length   : {}", data.length());
-                for ent in reader.data_entries(&data) {
+                for ent in reader.float_ts_entries(&data) {
                     let ent = ent.unwrap();
                     let index = ent.0;
                     let value = ent.1;

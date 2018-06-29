@@ -60,7 +60,7 @@ pub struct FloatTSWriter<'a, W: 'a> where W: 'a + io::Write + io::Seek {
 }
 
 impl<'a, W> FloatTSWriter<'a, W> where W: 'a + io::Write + io::Seek {
-    pub fn write_value(&mut self, index: f64, values: &[f64]) -> Result<()> {
+    pub fn write_entry(&mut self, index: f64, values: &[f64]) -> Result<()> {
         let _ = self.stream.write_f64::<LittleEndian>(index)?;
         for &x in values.iter() {
             let _ = self.stream.write_f64::<LittleEndian>(x)?;
