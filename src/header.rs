@@ -177,6 +177,10 @@ impl FloatTSBlock {
         self.length
     }
 
+    pub fn set_length(&mut self, len: u64) {
+        self.length = len;
+    }
+
     pub fn size(&self) -> usize {
         8 + 8 + 8
     }
@@ -201,24 +205,24 @@ impl FloatTSBlock {
 }
 
 #[derive(Debug)]
-pub struct FloatTSBlockBuilder<IdxLenType,ValLenType,LengthType> {
+pub struct FloatTSBlockBuilder<IdxLenType,ValLenType> {
     index_len : IdxLenType,
     value_len : ValLenType,
-    length    : LengthType,
+    length    : Option<u64>,
 }
 
-impl FloatTSBlockBuilder<(), (), ()> {
+impl FloatTSBlockBuilder<(), ()> {
     pub fn new() -> Self {
         FloatTSBlockBuilder {
             index_len : (),
             value_len : (),
-            length : (),
+            length : None,
         }
     }
 }
 
-impl<IdxLenType, ValLenType, LengthType> FloatTSBlockBuilder<IdxLenType, ValLenType, LengthType> {
-    pub fn index_len(self, len: u64) -> FloatTSBlockBuilder<u64, ValLenType, LengthType> {
+impl<IdxLenType, ValLenType> FloatTSBlockBuilder<IdxLenType, ValLenType> {
+    pub fn index_len(self, len: u64) -> FloatTSBlockBuilder<u64, ValLenType> {
         FloatTSBlockBuilder {
             index_len : len,
             value_len : self.value_len,
@@ -226,7 +230,7 @@ impl<IdxLenType, ValLenType, LengthType> FloatTSBlockBuilder<IdxLenType, ValLenT
         }
     }
 
-    pub fn value_len(self, len: u64) -> FloatTSBlockBuilder<IdxLenType, u64, LengthType> {
+    pub fn value_len(self, len: u64) -> FloatTSBlockBuilder<IdxLenType, u64> {
         FloatTSBlockBuilder {
             index_len : self.index_len,
             value_len : len,
@@ -234,22 +238,22 @@ impl<IdxLenType, ValLenType, LengthType> FloatTSBlockBuilder<IdxLenType, ValLenT
         }
     }
 
-    pub fn length(self, len: u64) -> FloatTSBlockBuilder<IdxLenType, ValLenType, u64> {
+    pub fn length(self, len: u64) -> Self {
         FloatTSBlockBuilder {
             index_len : self.index_len,
             value_len : self.value_len,
-            length : len,
+            length : Some(len),
         }
     }
 }
 
-impl FloatTSBlockBuilder<u64, u64, u64> {
+impl FloatTSBlockBuilder<u64, u64> {
     pub fn build(self) -> FloatTSBlock {
         assert_eq!(self.index_len, 1);
         FloatTSBlock {
             index_len : self.index_len,
             value_len : self.value_len,
-            length    : self.length,
+            length    : self.length.unwrap_or(0),
         }
     }
 }

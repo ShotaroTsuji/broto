@@ -24,16 +24,15 @@ fn main() {
     let data = FloatTSBlockBuilder::new()
         .index_len(1)
         .value_len(1)
-        .length(10)
         .build();
     println!("{:?}", data);
 
     {
         let mut dw = writer.write_float_ts(data).unwrap();
         println!("{:?}", dw);
-        for i in 0..10 {
+        for i in 0..20 {
             let x = vec![0.1 * i as f64];
-            println!("write {:?} ----> {:?}", x, dw.write_value(0.0, &x));
+            println!("write {:?} ----> {:?}", x, dw.write_value(i as f64, &x));
         }
     }
 
