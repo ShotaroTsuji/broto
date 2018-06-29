@@ -46,7 +46,7 @@ impl<W: io::Write + io::Seek> Writer<W> {
         })
     }
 
-    pub fn get_stream(self) -> W {
+    pub fn into_stream(self) -> W {
         self.stream
     }
 }

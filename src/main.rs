@@ -36,7 +36,7 @@ fn main() {
         }
     }
 
-    let buf = writer.get_stream().into_inner();
+    let buf = writer.into_stream().into_inner();
     println!("buf: {:?}", buf);
 
     let cur = Cursor::new(buf);
