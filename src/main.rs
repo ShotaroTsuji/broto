@@ -16,7 +16,8 @@ fn main() {
     println!("log: {:?}", log);
 
     let buf: Vec<u8> = Vec::new();
-    let mut writer = Writer::new(buf);
+    let cur = Cursor::new(buf);
+    let mut writer = Writer::new(cur);
     let _ = writer.write_header(0).unwrap();
     let _ = writer.write_log(log).unwrap();
 
@@ -36,7 +37,7 @@ fn main() {
         }
     }
 
-    let buf = writer.get_stream();
+    let buf = writer.get_stream().into_inner();
     println!("buf: {:?}", buf);
 
     let cur = Cursor::new(buf);
@@ -55,6 +56,7 @@ fn main() {
         match block {
             Block::Log(log) => {
                 println!("Log block was found.");
+                println!("    time   : {:?}", log.time());
                 println!("    program: {}", log.program());
                 println!("    info   : {}", log.info());
             },
