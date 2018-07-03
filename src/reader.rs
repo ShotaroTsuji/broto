@@ -43,7 +43,7 @@ impl<R: io::Read> Reader<R> {
         FloatTSReader {
             index_len: data.index_len() as usize,
             value_len: data.value_len() as usize,
-            remaining: data.length() as usize,
+            remaining: data.length().unwrap() as usize,
             stream: &mut self.stream,
             phantom: PhantomData,
         }
@@ -67,7 +67,7 @@ impl<'a, R> Iterator for FloatTSReader<'a, R> where R: 'a + io::Read {
             return None;
         }
 
-        let mut index: f64 = 0.0;
+        let index: f64;
         let mut value: Vec<f64> = Vec::new();
 
         match self.stream.read_f64::<LittleEndian>() {

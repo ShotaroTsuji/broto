@@ -22,7 +22,7 @@ fn write_string_into<W: io::Write>(string: &String, writer: &mut W) -> Result<()
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub struct Header {
     magic_number    : [u8; 8],
     header_size     : u64,
@@ -93,7 +93,7 @@ impl Header {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub struct BlockHeader {
     magic : [u8; 8],
     name  : String,
@@ -158,11 +158,11 @@ impl BlockHeader {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub struct FloatTSBlock {
     index_len  : u64,
     value_len  : u64,
-    length     : u64,
+    length     : Option<u64>,
 }
 
 impl FloatTSBlock {
@@ -174,12 +174,12 @@ impl FloatTSBlock {
         self.value_len
     }
 
-    pub fn length(&self) -> u64 {
+    pub fn length(&self) -> Option<u64> {
         self.length
     }
 
     pub fn set_length(&mut self, len: u64) {
-        self.length = len;
+        self.length = Some(len);
     }
 
     pub fn size(&self) -> usize {
@@ -193,19 +193,19 @@ impl FloatTSBlock {
         Ok(FloatTSBlock {
             index_len: index_len,
             value_len: value_len,
-            length: length,
+            length: Some(length),
         })
     }
 
     pub fn write_into<W: io::Write>(&self, writer: &mut W) -> Result<()> {
         writer.write_u64::<LittleEndian>(self.index_len)?;
         writer.write_u64::<LittleEndian>(self.value_len)?;
-        writer.write_u64::<LittleEndian>(self.length)?;
+        writer.write_u64::<LittleEndian>(self.length.unwrap_or(0))?;
         Ok(())
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub struct FloatTSBlockBuilder<IdxLenType,ValLenType> {
     index_len : IdxLenType,
     value_len : ValLenType,
@@ -254,12 +254,12 @@ impl FloatTSBlockBuilder<u64, u64> {
         FloatTSBlock {
             index_len : self.index_len,
             value_len : self.value_len,
-            length    : self.length.unwrap_or(0),
+            length    : self.length,
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub struct LogBlock {
     time    : std::time::Duration,
     program : String,
