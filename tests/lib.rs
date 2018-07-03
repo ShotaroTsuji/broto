@@ -9,7 +9,8 @@ use tsbin::writer::Writer;
 use tsbin::reader::{Reader, Block};
 use tsbin::error::Error;
 
-fn main() {
+#[test]
+fn test_reader_writer_1() {
     let mut data = Vec::new();
 
     for i in 0..30 {
