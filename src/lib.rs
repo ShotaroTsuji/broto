@@ -68,7 +68,7 @@ pub fn load_float_ts<R: io::Read>(stream: R) -> Result<(Vec<(f64,Vec<f64>)>, Met
 
 pub fn save_float_ts<W: io::Write>(stream: W, entries: &[(f64,Vec<f64>)], metadata: &Metadata) -> Result<W> {
     let mut writer = Writer::new(stream);
-    writer.write_header(0)?;
+    writer.write_header()?;
 
     for log in metadata.logs.iter() {
         writer.write_log(log)?;

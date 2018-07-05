@@ -28,28 +28,34 @@ pub struct Header {
     header_size     : u64,
     major_version   : u32,
     minor_version   : u32,
-    file_size       : u64,
+    reserved0       : u64,
+    reserved1       : u64,
+    reserved2       : u64,
+    reserved3       : u64,
 }
 
 impl Header {
-    pub fn new(file_size: u64) -> Header {
+    pub fn new() -> Header {
         Header {
             magic_number  : Header::clone_magic(),
             header_size   : std::mem::size_of::<Header>() as u64,
             major_version : 0,
             minor_version : 1,
-            file_size     : file_size,
+            reserved0     : 0,
+            reserved1     : 0,
+            reserved2     : 0,
+            reserved3     : 0,
         }
     }
 
     pub fn clone_magic() -> [u8; 8] {
         let mut magic = [0; 8];
-        magic.clone_from_slice("tsbinfmt".as_bytes());
+        magic.clone_from_slice("botaofmt".as_bytes());
         magic
     }
 
     pub fn check_magic(input: &[u8]) -> bool {
-        let magic = "tsbinfmt".as_bytes();
+        let magic = "botaofmt".as_bytes();
         magic.iter().zip(input.iter()).all(|(&x, &y)| x == y)
     }
 
@@ -67,13 +73,19 @@ impl Header {
         let header_size = reader.read_u64::<LittleEndian>()?;
         let major_version = reader.read_u32::<LittleEndian>()?;
         let minor_version = reader.read_u32::<LittleEndian>()?;
-        let file_size = reader.read_u64::<LittleEndian>()?;
+        let reserved0 = reader.read_u64::<LittleEndian>()?;
+        let reserved1 = reader.read_u64::<LittleEndian>()?;
+        let reserved2 = reader.read_u64::<LittleEndian>()?;
+        let reserved3 = reader.read_u64::<LittleEndian>()?;
         let hd = Header {
             magic_number : magic,
             header_size  : header_size,
             major_version: major_version,
             minor_version: minor_version,
-            file_size    : file_size,
+            reserved0    : reserved0,
+            reserved1    : reserved1,
+            reserved2    : reserved2,
+            reserved3    : reserved3,
         };
         Ok(hd)
     }
@@ -88,7 +100,10 @@ impl Header {
         writer.write_u64::<LittleEndian>(self.header_size)?;
         writer.write_u32::<LittleEndian>(self.major_version)?;
         writer.write_u32::<LittleEndian>(self.minor_version)?;
-        writer.write_u64::<LittleEndian>(self.file_size)?;
+        writer.write_u64::<LittleEndian>(self.reserved0)?;
+        writer.write_u64::<LittleEndian>(self.reserved1)?;
+        writer.write_u64::<LittleEndian>(self.reserved2)?;
+        writer.write_u64::<LittleEndian>(self.reserved3)?;
         Ok(())
     }
 }

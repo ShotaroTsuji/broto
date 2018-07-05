@@ -17,8 +17,8 @@ impl<W: io::Write> Writer<W> {
         }
     }
 
-    pub fn write_header(&mut self, file_size: u64) -> Result<()> {
-        let header = Header::new(file_size);
+    pub fn write_header(&mut self) -> Result<()> {
+        let header = Header::new();
         header.write_into(&mut self.stream)
     }
 

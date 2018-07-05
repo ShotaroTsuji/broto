@@ -1,13 +1,13 @@
-extern crate tsbin;
+extern crate botao;
 
 use std::io::Cursor;
 
-use tsbin::header::Header;
-use tsbin::header::LogBlockBuilder;
-use tsbin::header::FloatTSBlockBuilder;
-use tsbin::writer::Writer;
-use tsbin::reader::{Reader, Block};
-use tsbin::error::Error;
+use botao::header::Header;
+use botao::header::LogBlockBuilder;
+use botao::header::FloatTSBlockBuilder;
+use botao::writer::Writer;
+use botao::reader::{Reader, Block};
+use botao::error::Error;
 
 #[test]
 fn test_reader_writer_1() {
@@ -18,16 +18,16 @@ fn test_reader_writer_1() {
         data.push(vec![0.1 * x, 0.2 * x, 0.3 * x]);
     }
 
-    let hd = Header::new(0);
+    let hd = Header::new();
     println!("Header: {:?}", hd);
 
-    let log = LogBlockBuilder::new().program("tsbin").info("creation").build();
+    let log = LogBlockBuilder::new().program("botao").info("creation").build();
     println!("Log block: {:?}", log);
 
     let buf: Vec<u8> = Vec::new();
     let cur = Cursor::new(buf);
     let mut writer = Writer::new(cur);
-    let _ = writer.write_header(0).unwrap();
+    let _ = writer.write_header().unwrap();
     let _ = writer.write_log(&log).unwrap();
 
     let fts = FloatTSBlockBuilder::new()
@@ -101,16 +101,16 @@ fn test_reader_writer_2() {
         data.push(vec![0.1 * x, 0.2 * x, 0.3 * x]);
     }
 
-    let hd = Header::new(0);
+    let hd = Header::new();
     println!("Header: {:?}", hd);
 
-    let log = LogBlockBuilder::new().program("tsbin").info("creation").build();
+    let log = LogBlockBuilder::new().program("botao").info("creation").build();
     println!("Log block: {:?}", log);
 
     let buf: Vec<u8> = Vec::new();
     let cur = Cursor::new(buf);
     let mut writer = Writer::new(cur);
-    let _ = writer.write_header(0).unwrap();
+    let _ = writer.write_header().unwrap();
     let _ = writer.write_log(&log).unwrap();
 
     let fts = FloatTSBlockBuilder::new()
@@ -130,7 +130,7 @@ fn test_reader_writer_2() {
     let buf = writer.into_stream().into_inner();
 
     let cur = Cursor::new(buf);
-    let (entries, _) = tsbin::load_float_ts(cur).unwrap();
+    let (entries, _) = botao::load_float_ts(cur).unwrap();
     let read_data: Vec<Vec<f64>> = entries.into_iter().map(|(_, v)| v).collect();
 
     assert_eq!(data, read_data);
@@ -146,18 +146,18 @@ fn test_reader_writer_3() {
         data.push((x, vec![0.1 * x, 0.2 * x, 0.3 * x]));
     }
 
-    let mut metadata = tsbin::Metadata::new();
-    let log = LogBlockBuilder::new().program("tsbin").info("creation").build();
+    let mut metadata = botao::Metadata::new();
+    let log = LogBlockBuilder::new().program("botao").info("creation").build();
     metadata.get_logs_mut().push(log);
-    let log = LogBlockBuilder::new().program("tsbin").info("comment").build();
+    let log = LogBlockBuilder::new().program("botao").info("comment").build();
     metadata.get_logs_mut().push(log);
 
     let cur = Cursor::new(buf);
 
-    let mut cur = tsbin::save_float_ts(cur, &data, &metadata).unwrap();
+    let mut cur = botao::save_float_ts(cur, &data, &metadata).unwrap();
     cur.set_position(0);
 
-    let (entries, read_meta) = tsbin::load_float_ts(cur).unwrap();
+    let (entries, read_meta) = botao::load_float_ts(cur).unwrap();
 
     assert_eq!(data, entries);
     assert_eq!(metadata, read_meta);
