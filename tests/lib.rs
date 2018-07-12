@@ -2,12 +2,12 @@ extern crate broto;
 
 use std::io::Cursor;
 
-use broto::header::Header;
-use broto::header::LogBlockBuilder;
-use broto::header::FloatTSBlockBuilder;
-use broto::writer::Writer;
-use broto::reader::{Reader, Block};
-use broto::error::Error;
+use broto::Header;
+use broto::LogBlockBuilder;
+use broto::FloatTSBlockBuilder;
+use broto::Writer;
+use broto::{Reader, Block};
+use broto::Error;
 
 #[test]
 fn test_reader_writer_1() {

@@ -5,14 +5,12 @@ pub mod writer;
 pub mod reader;
 pub mod error;
 
-use std::io;
-use writer::Writer;
-use reader::Reader;
-use reader::Block;
-use header::FloatTSBlockBuilder;
-use error::Error;
-use error::Result;
+pub use self::writer::*;
+pub use self::reader::*;
+pub use self::header::*;
+pub use self::error::*;
 
+use std::io;
 
 #[derive(Debug,PartialEq)]
 pub struct Metadata {
