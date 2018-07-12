@@ -50,12 +50,12 @@ impl Header {
 
     pub fn clone_magic() -> [u8; 8] {
         let mut magic = [0; 8];
-        magic.clone_from_slice("botaofmt".as_bytes());
+        magic.clone_from_slice("brotofmt".as_bytes());
         magic
     }
 
     pub fn check_magic(input: &[u8]) -> bool {
-        let magic = "botaofmt".as_bytes();
+        let magic = "brotofmt".as_bytes();
         magic.iter().zip(input.iter()).all(|(&x, &y)| x == y)
     }
 

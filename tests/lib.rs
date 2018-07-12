@@ -1,13 +1,13 @@
-extern crate botao;
+extern crate broto;
 
 use std::io::Cursor;
 
-use botao::header::Header;
-use botao::header::LogBlockBuilder;
-use botao::header::FloatTSBlockBuilder;
-use botao::writer::Writer;
-use botao::reader::{Reader, Block};
-use botao::error::Error;
+use broto::header::Header;
+use broto::header::LogBlockBuilder;
+use broto::header::FloatTSBlockBuilder;
+use broto::writer::Writer;
+use broto::reader::{Reader, Block};
+use broto::error::Error;
 
 #[test]
 fn test_reader_writer_1() {
@@ -21,7 +21,7 @@ fn test_reader_writer_1() {
     let hd = Header::new();
     println!("Header: {:?}", hd);
 
-    let log = LogBlockBuilder::new().program("botao").info("creation").build();
+    let log = LogBlockBuilder::new().program("broto").info("creation").build();
     println!("Log block: {:?}", log);
 
     let buf: Vec<u8> = Vec::new();
@@ -104,7 +104,7 @@ fn test_reader_writer_2() {
     let hd = Header::new();
     println!("Header: {:?}", hd);
 
-    let log = LogBlockBuilder::new().program("botao").info("creation").build();
+    let log = LogBlockBuilder::new().program("broto").info("creation").build();
     println!("Log block: {:?}", log);
 
     let buf: Vec<u8> = Vec::new();
@@ -130,7 +130,7 @@ fn test_reader_writer_2() {
     let buf = writer.into_stream().into_inner();
 
     let cur = Cursor::new(buf);
-    let (entries, _) = botao::load_float_ts(cur).unwrap();
+    let (entries, _) = broto::load_float_ts(cur).unwrap();
     let read_data: Vec<Vec<f64>> = entries.into_iter().map(|(_, v)| v).collect();
 
     assert_eq!(data, read_data);
@@ -146,18 +146,18 @@ fn test_reader_writer_3() {
         data.push((x, vec![0.1 * x, 0.2 * x, 0.3 * x]));
     }
 
-    let mut metadata = botao::Metadata::new();
-    let log = LogBlockBuilder::new().program("botao").info("creation").build();
+    let mut metadata = broto::Metadata::new();
+    let log = LogBlockBuilder::new().program("broto").info("creation").build();
     metadata.get_logs_mut().push(log);
-    let log = LogBlockBuilder::new().program("botao").info("comment").build();
+    let log = LogBlockBuilder::new().program("broto").info("comment").build();
     metadata.get_logs_mut().push(log);
 
     let cur = Cursor::new(buf);
 
-    let mut cur = botao::save_float_ts(cur, &data, &metadata).unwrap();
+    let mut cur = broto::save_float_ts(cur, &data, &metadata).unwrap();
     cur.set_position(0);
 
-    let (entries, read_meta) = botao::load_float_ts(cur).unwrap();
+    let (entries, read_meta) = broto::load_float_ts(cur).unwrap();
 
     assert_eq!(data, entries);
     assert_eq!(metadata, read_meta);
