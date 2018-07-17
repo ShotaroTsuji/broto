@@ -33,7 +33,7 @@ impl Metadata {
     }
 }
 
-pub fn load_float_ts<R: io::Read>(stream: R) -> Result<(Vec<(f64,Vec<f64>)>, Metadata)> {
+pub fn load_f64ts<R: io::Read>(stream: R) -> Result<(Vec<(f64,Vec<f64>)>, Metadata)> {
     let mut reader = Reader::new(stream);
     let _ = reader.initialize().unwrap();
 
@@ -52,8 +52,8 @@ pub fn load_float_ts<R: io::Read>(stream: R) -> Result<(Vec<(f64,Vec<f64>)>, Met
         let block = result.unwrap();
         match block {
             Block::Log(log) => { metadata.logs.push(log); },
-            Block::FloatTS(fts) => {
-                for ent in reader.float_ts_entries(&fts) {
+            Block::F64TS(fts) => {
+                for ent in reader.f64ts_entries(&fts) {
                     let ent = ent.unwrap();
                     read_data.push(ent);
                 }
@@ -64,7 +64,7 @@ pub fn load_float_ts<R: io::Read>(stream: R) -> Result<(Vec<(f64,Vec<f64>)>, Met
     Ok((read_data, metadata))
 }
 
-pub fn save_float_ts<W: io::Write>(stream: W, entries: &[(f64,Vec<f64>)], metadata: &Metadata) -> Result<W> {
+pub fn save_f64ts<W: io::Write>(stream: W, entries: &[(f64,Vec<f64>)], metadata: &Metadata) -> Result<W> {
     let mut writer = Writer::new(stream);
     writer.write_header()?;
 
@@ -72,14 +72,14 @@ pub fn save_float_ts<W: io::Write>(stream: W, entries: &[(f64,Vec<f64>)], metada
         writer.write_log(log)?;
     }
 
-    let fts = FloatTSBlockBuilder::new()
+    let fts = F64TSBlockBuilder::new()
         .index_len(1)
         .value_len(entries[0].1.len() as u64)
         .length(entries.len() as u64)
         .build();
-    println!("FloatTS block: {:?}", fts);
+    println!("F64TS block: {:?}", fts);
 
-    let mut w = writer.write_float_ts(fts).unwrap();
+    let mut w = writer.write_f64ts(fts).unwrap();
     for entry in entries.iter() {
         let index = entry.0;
         let value = &entry.1;

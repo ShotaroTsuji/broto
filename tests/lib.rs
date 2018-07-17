@@ -4,7 +4,7 @@ use std::io::Cursor;
 
 use broto::Header;
 use broto::LogBlockBuilder;
-use broto::FloatTSBlockBuilder;
+use broto::F64TSBlockBuilder;
 use broto::Writer;
 use broto::{Reader, Block};
 use broto::Error;
@@ -30,13 +30,13 @@ fn test_reader_writer_1() {
     let _ = writer.write_header().unwrap();
     let _ = writer.write_log(&log).unwrap();
 
-    let fts = FloatTSBlockBuilder::new()
+    let fts = F64TSBlockBuilder::new()
         .index_len(1)
         .value_len(3)
         .build();
-    println!("FloatTS block: {:?}", fts);
+    println!("F64TS block: {:?}", fts);
 
-    let mut w = writer.write_float_ts_with_seek(fts).unwrap();
+    let mut w = writer.write_f64ts_with_seek(fts).unwrap();
     for (i, v) in data.iter().enumerate() {
         println!("write {:?} ----> {:?}", *v, w.write_entry(i as f64, v));
     }
@@ -67,12 +67,12 @@ fn test_reader_writer_1() {
                 println!("    program: {}", log.program());
                 println!("    info   : {}", log.info());
             },
-            Block::FloatTS(fts) => {
-                println!("FloatTS block was found.");
+            Block::F64TS(fts) => {
+                println!("F64TS block was found.");
                 println!("    index_len: {}", fts.index_len());
                 println!("    value_len: {}", fts.value_len());
                 println!("    length   : {}", fts.length().unwrap());
-                for ent in reader.float_ts_entries(&fts) {
+                for ent in reader.f64ts_entries(&fts) {
                     let ent = ent.unwrap();
                     let index = ent.0;
                     let value = ent.1;
@@ -111,13 +111,13 @@ fn test_reader_writer_2() {
     let _ = writer.write_header().unwrap();
     let _ = writer.write_log(&log).unwrap();
 
-    let fts = FloatTSBlockBuilder::new()
+    let fts = F64TSBlockBuilder::new()
         .index_len(1)
         .value_len(3)
         .build();
-    println!("FloatTS block: {:?}", fts);
+    println!("F64TS block: {:?}", fts);
 
-    let mut w = writer.write_float_ts_with_seek(fts).unwrap();
+    let mut w = writer.write_f64ts_with_seek(fts).unwrap();
     for (i, v) in data.iter().enumerate() {
         println!("write {:?} ----> {:?}", *v, w.write_entry(i as f64, v));
     }
@@ -126,7 +126,7 @@ fn test_reader_writer_2() {
     let buf = writer.into_stream().into_inner();
 
     let cur = Cursor::new(buf);
-    let (entries, _) = broto::load_float_ts(cur).unwrap();
+    let (entries, _) = broto::load_f64ts(cur).unwrap();
     let read_data: Vec<Vec<f64>> = entries.into_iter().map(|(_, v)| v).collect();
 
     assert_eq!(data, read_data);
@@ -150,10 +150,10 @@ fn test_reader_writer_3() {
 
     let cur = Cursor::new(buf);
 
-    let mut cur = broto::save_float_ts(cur, &data, &metadata).unwrap();
+    let mut cur = broto::save_f64ts(cur, &data, &metadata).unwrap();
     cur.set_position(0);
 
-    let (entries, read_meta) = broto::load_float_ts(cur).unwrap();
+    let (entries, read_meta) = broto::load_f64ts(cur).unwrap();
 
     assert_eq!(data, entries);
     assert_eq!(metadata, read_meta);

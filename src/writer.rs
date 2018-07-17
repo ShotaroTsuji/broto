@@ -1,7 +1,7 @@
 use std::io;
 use std::io::SeekFrom;
 use byteorder::{WriteBytesExt,LittleEndian};
-use header::{Header, BlockHeader, LogBlock, FloatTSBlock};
+use header::{Header, BlockHeader, LogBlock, F64TSBlock};
 use error::Result;
 
 
@@ -37,12 +37,12 @@ impl<W: io::Write> Writer<W> {
         self.stream
     }
 
-    pub fn write_float_ts(mut self, block: FloatTSBlock) -> Result<FloatTSWriter<W>> {
+    pub fn write_f64ts(mut self, block: F64TSBlock) -> Result<F64TSWriter<W>> {
         assert!(block.length().is_some());
-        let header = BlockHeader::new("float-ts", block.size() as u64);
+        let header = BlockHeader::new("f64ts", block.size() as u64);
         header.write_into(&mut self.stream)?;
         block.write_into(&mut self.stream)?;
-        Ok(FloatTSWriter {
+        Ok(F64TSWriter {
             value_len: block.value_len() as usize,
             writer : self,
             block_header: block,
@@ -54,12 +54,12 @@ impl<W: io::Write> Writer<W> {
 }
 
 impl<W: io::Write + io::Seek> Writer<W> {
-    pub fn write_float_ts_with_seek(mut self, block: FloatTSBlock) -> Result<FloatTSWriter<W>> {
-        let header = BlockHeader::new("float-ts", block.size() as u64);
+    pub fn write_f64ts_with_seek(mut self, block: F64TSBlock) -> Result<F64TSWriter<W>> {
+        let header = BlockHeader::new("f64ts", block.size() as u64);
         header.write_into(&mut self.stream)?;
         let block_pos = self.stream.seek(SeekFrom::Current(0))?;
         block.write_into(&mut self.stream)?;
-        Ok(FloatTSWriter {
+        Ok(F64TSWriter {
             value_len: block.value_len() as usize,
             writer: self,
             block_header: block,
@@ -71,16 +71,16 @@ impl<W: io::Write + io::Seek> Writer<W> {
 }
 
 #[derive(Debug)]
-pub struct FloatTSWriter<W> where W: io::Write {
+pub struct F64TSWriter<W> where W: io::Write {
     value_len : usize,
     writer : Writer<W>,
-    block_header : FloatTSBlock,
+    block_header : F64TSBlock,
     block_pos : Option<u64>,
     count : u64,
     finalized : bool,
 }
 
-impl<W> FloatTSWriter<W> where W: io::Write {
+impl<W> F64TSWriter<W> where W: io::Write {
     pub fn stream_mut(&mut self) -> &mut W {
         self.writer.stream_mut()
     }
@@ -100,7 +100,7 @@ impl<W> FloatTSWriter<W> where W: io::Write {
     }
 }
 
-impl<W> FloatTSWriter<W> where W: io::Write + io::Seek {
+impl<W> F64TSWriter<W> where W: io::Write + io::Seek {
     pub fn finalize(mut self) -> Result<Self> {
         let block_pos = self.block_pos.unwrap();
         let mut block_header = self.block_header.clone();

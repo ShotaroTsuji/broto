@@ -1,13 +1,13 @@
 use std::io;
 use std::marker::PhantomData;
 use byteorder::{LittleEndian, ReadBytesExt};
-use header::{Header, BlockHeader, LogBlock, FloatTSBlock};
+use header::{Header, BlockHeader, LogBlock, F64TSBlock};
 use error::{Result, Error};
 
 #[derive(Debug)]
 pub enum Block {
     Log(LogBlock),
-    FloatTS(FloatTSBlock),
+    F64TS(F64TSBlock),
 }
 
 #[derive(Debug)]
@@ -34,13 +34,13 @@ impl<R: io::Read> Reader<R> {
         let bheader = BlockHeader::read_from(&mut self.stream)?;
         match bheader.clone_name().as_str() {
             "log" => LogBlock::read_from(&mut self.stream).map(|v| Block::Log(v)),
-            "float-ts" => FloatTSBlock::read_from(&mut self.stream).map(|v| Block::FloatTS(v)),
+            "f64ts" => F64TSBlock::read_from(&mut self.stream).map(|v| Block::F64TS(v)),
             _ => Err(Error::UndefinedBlock),
         }
     }
 
-    pub fn float_ts_entries(&mut self, data: &FloatTSBlock) -> FloatTSReader<R> {
-        FloatTSReader {
+    pub fn f64ts_entries(&mut self, data: &F64TSBlock) -> F64TSReader<R> {
+        F64TSReader {
             index_len: data.index_len() as usize,
             value_len: data.value_len() as usize,
             remaining: data.length().unwrap() as usize,
@@ -51,7 +51,7 @@ impl<R: io::Read> Reader<R> {
 }
 
 #[derive(Debug)]
-pub struct FloatTSReader<'a, R: 'a> {
+pub struct F64TSReader<'a, R: 'a> {
     index_len : usize,
     value_len : usize,
     remaining : usize,
@@ -59,7 +59,7 @@ pub struct FloatTSReader<'a, R: 'a> {
     phantom: PhantomData<&'a R>,
 }
 
-impl<'a, R> Iterator for FloatTSReader<'a, R> where R: 'a + io::Read {
+impl<'a, R> Iterator for F64TSReader<'a, R> where R: 'a + io::Read {
     type Item = Result<(f64,Vec<f64>)>;
 
     fn next(&mut self) -> Option<Self::Item> {
