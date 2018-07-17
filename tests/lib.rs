@@ -36,13 +36,11 @@ fn test_reader_writer_1() {
         .build();
     println!("FloatTS block: {:?}", fts);
 
-    {
-        let mut w = writer.write_float_ts_with_seek(fts).unwrap();
-        for (i, v) in data.iter().enumerate() {
-            println!("write {:?} ----> {:?}", *v, w.write_entry(i as f64, v));
-        }
-        w.finalize().unwrap();
+    let mut w = writer.write_float_ts_with_seek(fts).unwrap();
+    for (i, v) in data.iter().enumerate() {
+        println!("write {:?} ----> {:?}", *v, w.write_entry(i as f64, v));
     }
+    let writer = w.finalize().unwrap().finish();
 
     let buf = writer.into_stream().into_inner();
 
@@ -119,13 +117,11 @@ fn test_reader_writer_2() {
         .build();
     println!("FloatTS block: {:?}", fts);
 
-    {
-        let mut w = writer.write_float_ts_with_seek(fts).unwrap();
-        for (i, v) in data.iter().enumerate() {
-            println!("write {:?} ----> {:?}", *v, w.write_entry(i as f64, v));
-        }
-        w.finalize().unwrap();
+    let mut w = writer.write_float_ts_with_seek(fts).unwrap();
+    for (i, v) in data.iter().enumerate() {
+        println!("write {:?} ----> {:?}", *v, w.write_entry(i as f64, v));
     }
+    let writer = w.finalize().unwrap().finish();
 
     let buf = writer.into_stream().into_inner();
 

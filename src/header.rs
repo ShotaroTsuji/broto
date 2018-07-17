@@ -173,7 +173,7 @@ impl BlockHeader {
     }
 }
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug,PartialEq,Clone)]
 pub struct FloatTSBlock {
     index_len  : u64,
     value_len  : u64,

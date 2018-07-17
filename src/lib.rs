@@ -79,14 +79,14 @@ pub fn save_float_ts<W: io::Write>(stream: W, entries: &[(f64,Vec<f64>)], metada
         .build();
     println!("FloatTS block: {:?}", fts);
 
-    {
-        let mut w = writer.write_float_ts(fts).unwrap();
-        for entry in entries.iter() {
-            let index = entry.0;
-            let value = &entry.1;
-            w.write_entry(index, value)?;
-        }
+    let mut w = writer.write_float_ts(fts).unwrap();
+    for entry in entries.iter() {
+        let index = entry.0;
+        let value = &entry.1;
+        w.write_entry(index, value)?;
     }
+    let writer = w.finish();
+
     Ok(writer.into_stream())
 }
 
